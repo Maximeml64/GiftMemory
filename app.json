@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "GiftMemory",
+    "slug": "gift-memory",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF8F0"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yourname.giftmemory",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Pour prendre une photo du cadeau.",
+        "NSPhotoLibraryUsageDescription": "Pour choisir une photo depuis la galerie.",
+        "NSPhotoLibraryAddUsageDescription": "Pour sauvegarder les photos des cadeaux."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFF8F0"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "package": "com.yourname.giftmemory"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'app accède à vos photos pour les cadeaux.",
+          "cameraPermission": "L'app utilise la caméra pour photographier les cadeaux."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Accès à la photothèque pour les cadeaux.",
+          "savePhotosPermission": "Sauvegarde les photos des cadeaux.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ]
+  }
+}
