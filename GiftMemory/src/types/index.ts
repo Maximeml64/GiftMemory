@@ -1,8 +1,8 @@
 // src/types/index.ts
 
 export type Occasion = 'Anniversaire' | 'Noël' | 'Naissance' | 'Mariage' | 'Autre';
+
 export type GiftCategory = 'Cadeau' | 'Vin & Spiritueux';
-export type EventType = 'Anniversaire' | 'Mariage' | 'Naissance' | 'Autre';
 
 export interface Gift {
   id: string;
@@ -10,25 +10,15 @@ export interface Gift {
   name: string;
   giver: string;
   occasion: Occasion;
-  date: string;
+  date: string; // ISO string
   notes?: string;
-  createdAt: string;
+  createdAt: string; // ISO string
+  // Category
   category: GiftCategory;
-  vintage?: string;
-  appellation?: string;
-  quantity?: number;
-}
-
-export interface CalendarEvent {
-  id: string;
-  personName: string;
-  type: EventType;
-  month: number;
-  day: number;
-  reminderDays: number;
-  giftGiven?: string;
-  notes?: string;
-  createdAt: string;
+  // Wine/spirits fields (only when category === 'Vin & Spiritueux')
+  vintage?: string;       // millésime ex: "2019"
+  appellation?: string;   // ex: "Bordeaux", "Champagne"
+  quantity?: number;      // nombre de bouteilles
 }
 
 export type RootStackParamList = {
@@ -36,16 +26,12 @@ export type RootStackParamList = {
   AddGift: { giftId?: string } | undefined;
   GiftDetail: { giftId: string };
   GiverDetail: { giverName: string };
-  AddEvent: { eventId?: string } | undefined;
-  EventDetail: { eventId: string };
-  Paywall: undefined;
   Cgu: undefined;
   Privacy: undefined;
 };
 
 export type TabParamList = {
   Home: undefined;
-  Events: undefined;
   Givers: undefined;
   Settings: undefined;
 };

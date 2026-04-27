@@ -2,13 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
+  View, Text, FlatList, StyleSheet, TextInput,
+  TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -16,18 +11,19 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
+import { usePremiumGate } from '../hooks/usePremiumGate';
 import GiftCard from '../components/GiftCard';
 import FAB from '../components/FAB';
 import EmptyState from '../components/EmptyState';
 import { Colors, Spacing, Radius, Typography, Shadow } from '../utils/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-
 type SortKey = 'date' | 'name' | 'giver';
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const { gifts, loading } = useGifts();
+  const { checkGiftLimit } = usePremiumGate();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('date');
 
@@ -111,11 +107,7 @@ export default function HomeScreen() {
       {filtered.length === 0 ? (
         <EmptyState
           emoji="🎁"
-          title={
-            search
-              ? 'Aucun résultat'
-              : 'Aucun cadeau enregistré'
-          }
+          title={search ? 'Aucun résultat' : 'Aucun cadeau enregistré'}
           subtitle={
             search
               ? 'Essayez un autre terme de recherche'
@@ -132,15 +124,13 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <GiftCard
               gift={item}
-              onPress={() =>
-                navigation.navigate('GiftDetail', { giftId: item.id })
-              }
+              onPress={() => navigation.navigate('GiftDetail', { giftId: item.id })}
             />
           )}
         />
       )}
 
-      <FAB onPress={() => navigation.navigate('AddGift', undefined)} />
+      <FAB onPress={() => { if (checkGiftLimit()) navigation.navigate('AddGift', undefined); }} />
     </SafeAreaView>
   );
 }
@@ -153,15 +143,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
   },
-  title: {
-    ...Typography.displayMedium,
-    color: Colors.text,
-  },
-  subtitle: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
+  title: { ...Typography.displayMedium, color: Colors.text },
+  subtitle: { ...Typography.body, color: Colors.textSecondary, marginTop: 2 },
   searchContainer: {
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.sm,
@@ -200,10 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
-  pillText: {
-    ...Typography.captionMedium,
-    color: Colors.textSecondary,
-  },
+  pillText: { ...Typography.captionMedium, color: Colors.textSecondary },
   pillTextActive: { color: '#FFF' },
   grid: {
     paddingHorizontal: Spacing.lg - 6,
