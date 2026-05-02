@@ -1,7 +1,7 @@
 // src/screens/EventsScreen.tsx
 
 import React, { useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,7 +22,20 @@ export default function EventsScreen() {
   const { checkEventLimit } = usePremiumGate();
   const sorted = useMemo(() => sortEventsByNext(events), [events]);
 
-  if (!loading && events.length === 0) {
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Événements</Text>
+        </View>
+        <View style={styles.center}>
+          <ActivityIndicator color={Colors.primary} size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (events.length === 0) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
@@ -94,6 +107,7 @@ export default function EventsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.md },
   title: { ...Typography.displayMedium, color: Colors.text },
   subtitle: { ...Typography.body, color: Colors.textSecondary, marginTop: 2 },

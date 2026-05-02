@@ -3,10 +3,12 @@
 import React, {
   createContext, useContext, useEffect, useState, useCallback, ReactNode,
 } from 'react';
+import { Platform, Alert } from 'react-native';
 import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
-import { Alert } from 'react-native';
 
-const API_KEY = 'appl_test_ktMTDcsmuIyXdseoUofGfOuzMeN';
+const API_KEY = Platform.OS === 'ios'
+  ? 'appl_test_ktMTDcsmuIyXdseoUofGfOuzMeN'
+  : 'VOTRE_CLE_ANDROID';
 
 interface PurchaseContextValue {
   isLoading: boolean;
@@ -46,9 +48,12 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
     }
     init();
 
-    Purchases.addCustomerInfoUpdateListener((info) => {
+    const unsubscribe = Purchases.addCustomerInfoUpdateListener((info) => {
       checkPremium(info);
     });
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   const purchasePackage = useCallback(async (pkg: PurchasesPackage): Promise<boolean> => {

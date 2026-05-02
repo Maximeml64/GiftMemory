@@ -7,7 +7,6 @@ import { Gift } from '../types';
 const GIFTS_KEY = '@gift_memory_gifts';
 const IMAGES_DIR = FileSystem.documentDirectory + 'gift_images/';
 
-// Ensure images directory exists
 async function ensureImagesDir(): Promise<void> {
   const info = await FileSystem.getInfoAsync(IMAGES_DIR);
   if (!info.exists) {
@@ -15,7 +14,6 @@ async function ensureImagesDir(): Promise<void> {
   }
 }
 
-// Copy image to permanent app storage and return new URI
 export async function saveImageLocally(sourceUri: string, giftId: string): Promise<string> {
   await ensureImagesDir();
   const extension = sourceUri.split('.').pop()?.split('?')[0] || 'jpg';
@@ -24,7 +22,6 @@ export async function saveImageLocally(sourceUri: string, giftId: string): Promi
   return destUri;
 }
 
-// Delete image from local storage
 export async function deleteImageLocally(imageUri: string): Promise<void> {
   try {
     const info = await FileSystem.getInfoAsync(imageUri);
@@ -36,30 +33,31 @@ export async function deleteImageLocally(imageUri: string): Promise<void> {
   }
 }
 
-// Load all gifts
 export async function loadGifts(): Promise<Gift[]> {
   try {
     const raw = await AsyncStorage.getItem(GIFTS_KEY);
-    if (!raw) return [];
-    const gifts: Gift[] = JSON.parse(raw);
-    // Validate image URIs still exist
-    const validated = await Promise.all(
-      gifts.map(async (gift) => {
-        if (gift.imageUri) {
-          const info = await FileSystem.getInfoAsync(gift.imageUri);
-          if (!info.exists) return { ...gift, imageUri: null };
-        }
-        return gift;
-      })
-    );
-    return validated;
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('loadGifts error:', e);
     return [];
   }
 }
 
-// Save all gifts
+// Call once at boot from GiftsContext.refresh() — not on every read/write
+export async function validateImageUris(gifts: Gift[]): Promise<Gift[]> {
+  return Promise.all(
+    gifts.map(async (gift) => {
+      if (!gift.imageUri) return gift;
+      try {
+        const info = await FileSystem.getInfoAsync(gift.imageUri);
+        return info.exists ? gift : { ...gift, imageUri: null };
+      } catch {
+        return { ...gift, imageUri: null };
+      }
+    })
+  );
+}
+
 export async function saveGifts(gifts: Gift[]): Promise<void> {
   try {
     await AsyncStorage.setItem(GIFTS_KEY, JSON.stringify(gifts));
@@ -69,7 +67,6 @@ export async function saveGifts(gifts: Gift[]): Promise<void> {
   }
 }
 
-// Add or update a single gift
 export async function upsertGift(gift: Gift): Promise<Gift[]> {
   const gifts = await loadGifts();
   const index = gifts.findIndex((g) => g.id === gift.id);
@@ -82,7 +79,6 @@ export async function upsertGift(gift: Gift): Promise<Gift[]> {
   return gifts;
 }
 
-// Delete a gift and its image
 export async function deleteGift(giftId: string): Promise<Gift[]> {
   const gifts = await loadGifts();
   const gift = gifts.find((g) => g.id === giftId);

@@ -30,9 +30,13 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { events: [], loading: true });
 
   useEffect(() => {
-    AsyncStorage.getItem(EVENTS_KEY).then((raw) => {
-      dispatch({ type: 'SET_EVENTS', payload: raw ? JSON.parse(raw) : [] });
-    });
+    AsyncStorage.getItem(EVENTS_KEY)
+      .then((raw) => {
+        dispatch({ type: 'SET_EVENTS', payload: raw ? JSON.parse(raw) : [] });
+      })
+      .catch(() => {
+        dispatch({ type: 'SET_EVENTS', payload: [] });
+      });
   }, []);
 
   const persist = useCallback(async (events: CalendarEvent[]) => {
@@ -41,19 +45,27 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveEvent = useCallback(async (event: CalendarEvent) => {
-    const current = state.events;
+    const raw = await AsyncStorage.getItem(EVENTS_KEY);
+    const current: CalendarEvent[] = raw ? JSON.parse(raw) : [];
     const index = current.findIndex((e) => e.id === event.id);
-    const updated = index >= 0 ? current.map((e) => e.id === event.id ? event : e) : [event, ...current];
+    const updated = index >= 0
+      ? current.map((e) => (e.id === event.id ? event : e))
+      : [event, ...current];
     await persist(updated);
     await scheduleEventNotifications(event);
-  }, [state.events, persist]);
+  }, [persist]);
 
   const removeEvent = useCallback(async (eventId: string) => {
-    await persist(state.events.filter((e) => e.id !== eventId));
+    const raw = await AsyncStorage.getItem(EVENTS_KEY);
+    const current: CalendarEvent[] = raw ? JSON.parse(raw) : [];
+    await persist(current.filter((e) => e.id !== eventId));
     await cancelEventNotifications(eventId);
-  }, [state.events, persist]);
+  }, [persist]);
 
-  const getEventById = useCallback((eventId: string) => state.events.find((e) => e.id === eventId), [state.events]);
+  const getEventById = useCallback(
+    (eventId: string) => state.events.find((e) => e.id === eventId),
+    [state.events]
+  );
 
   return (
     <EventsContext.Provider value={{ ...state, saveEvent, removeEvent, getEventById }}>

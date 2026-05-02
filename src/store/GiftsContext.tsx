@@ -9,17 +9,13 @@ import React, {
   ReactNode,
 } from 'react';
 import { Gift } from '../types';
-import { loadGifts, upsertGift, deleteGift } from '../utils/storage';
-
-// --- State ---
+import { loadGifts, upsertGift, deleteGift, validateImageUris, saveGifts } from '../utils/storage';
 
 interface GiftsState {
   gifts: Gift[];
   loading: boolean;
   error: string | null;
 }
-
-// --- Actions ---
 
 type Action =
   | { type: 'SET_GIFTS'; payload: Gift[] }
@@ -45,8 +41,6 @@ const initialState: GiftsState = {
   error: null,
 };
 
-// --- Context ---
-
 interface GiftsContextValue extends GiftsState {
   saveGift: (gift: Gift) => Promise<void>;
   removeGift: (giftId: string) => Promise<void>;
@@ -58,13 +52,25 @@ interface GiftsContextValue extends GiftsState {
 
 const GiftsContext = createContext<GiftsContextValue | null>(null);
 
+// Validate image URIs only once per app session, not on every save
+let hasValidatedOnBoot = false;
+
 export function GiftsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const refresh = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const gifts = await loadGifts();
+      let gifts = await loadGifts();
+      if (!hasValidatedOnBoot) {
+        hasValidatedOnBoot = true;
+        const validated = await validateImageUris(gifts);
+        const hasChanges = validated.some((g, i) => g.imageUri !== gifts[i].imageUri);
+        if (hasChanges) {
+          await saveGifts(validated);
+          gifts = validated;
+        }
+      }
       dispatch({ type: 'SET_GIFTS', payload: gifts });
     } catch (e) {
       dispatch({ type: 'SET_ERROR', payload: 'Erreur de chargement' });

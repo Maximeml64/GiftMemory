@@ -118,7 +118,7 @@ export default function AddGiftScreen() {
         ...(isWine && {
           vintage: vintage.trim() || undefined,
           appellation: appellation.trim() || undefined,
-          quantity: quantity ? parseInt(quantity, 10) : 1,
+          quantity: Math.max(1, parseInt(quantity, 10) || 1),
         }),
       };
       await saveGift(gift);

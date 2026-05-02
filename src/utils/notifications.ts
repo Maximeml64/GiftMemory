@@ -49,7 +49,10 @@ export async function scheduleEventNotifications(event: CalendarEvent): Promise<
       body: `${event.type} de ${event.personName} ${daysText} !${event.giftGiven ? ` Cadeau prévu : ${event.giftGiven}` : ''}`,
       data: { eventId: event.id },
     },
-    trigger: { date: triggerDate, repeats: false } as any,
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: triggerDate,
+    },
   });
 
   const dayTrigger = new Date(next);
@@ -62,7 +65,10 @@ export async function scheduleEventNotifications(event: CalendarEvent): Promise<
         body: `C'est aujourd'hui ! 🎉${event.giftGiven ? ` Cadeau prévu : ${event.giftGiven}` : ''}`,
         data: { eventId: event.id },
       },
-      trigger: { date: dayTrigger, repeats: false } as any,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: dayTrigger,
+      },
     });
   }
 }

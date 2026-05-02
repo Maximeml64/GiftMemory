@@ -3,14 +3,18 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  ActivityIndicator, Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PurchasesPackage } from 'react-native-purchases';
 
+import { RootStackParamList } from '../types';
 import { usePurchase } from '../store/PurchaseContext';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../utils/theme';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const FEATURES = [
   '🎁 Cadeaux illimités',
@@ -38,18 +42,37 @@ function packageLabel(pkg: PurchasesPackage): { title: string; price: string; ba
 }
 
 export default function PaywallScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
   const { packages, purchasePackage, restorePurchases, isPremium } = usePurchase();
   const [selectedPkg, setSelectedPkg] = useState<PurchasesPackage | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Pre-select annual by default
   React.useEffect(() => {
     if (packages.length > 0 && !selectedPkg) {
       const annual = packages.find((p) => p.identifier === '$rc_annual') ?? packages[0];
       setSelectedPkg(annual);
     }
   }, [packages]);
+
+  if (isPremium) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Text style={styles.closeText}>✕</Text>
+        </TouchableOpacity>
+        <View style={styles.alreadyPremiumContainer}>
+          <Text style={styles.alreadyPremiumEmoji}>✨</Text>
+          <Text style={styles.alreadyPremiumTitle}>Vous êtes déjà Premium !</Text>
+          <Text style={styles.alreadyPremiumSub}>
+            Profitez de toutes les fonctionnalités sans limite.
+          </Text>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+            <Text style={styles.backBtnText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   async function handlePurchase() {
     if (!selectedPkg) return;
@@ -65,12 +88,10 @@ export default function PaywallScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Close */}
         <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
 
-        {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.heroEmoji}>🎁</Text>
           <Text style={styles.heroTitle}>GiftMemory Premium</Text>
@@ -79,14 +100,12 @@ export default function PaywallScreen() {
           </Text>
         </View>
 
-        {/* Trial banner */}
         {isMonthly && (
           <View style={styles.trialBanner}>
             <Text style={styles.trialText}>✨ 7 jours gratuits, puis {label?.price}</Text>
           </View>
         )}
 
-        {/* Features */}
         <View style={styles.featuresCard}>
           {FEATURES.map((f) => (
             <View key={f} style={styles.featureRow}>
@@ -96,7 +115,6 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        {/* Package selector */}
         {packages.length === 0 ? (
           <ActivityIndicator color={Colors.primary} style={{ marginVertical: Spacing.xl }} />
         ) : (
@@ -131,7 +149,6 @@ export default function PaywallScreen() {
           </View>
         )}
 
-        {/* CTA */}
         <TouchableOpacity
           style={[styles.ctaBtn, (loading || !selectedPkg) && styles.ctaBtnDisabled]}
           onPress={handlePurchase}
@@ -142,12 +159,11 @@ export default function PaywallScreen() {
             <ActivityIndicator color="#FFF" />
           ) : (
             <Text style={styles.ctaText}>
-              {isMonthly ? 'Commencer l\'essai gratuit' : 'Choisir cette offre'}
+              {isMonthly ? "Commencer l'essai gratuit" : 'Choisir cette offre'}
             </Text>
           )}
         </TouchableOpacity>
 
-        {/* Restore */}
         <TouchableOpacity onPress={restorePurchases} activeOpacity={0.7} style={styles.restoreBtn}>
           <Text style={styles.restoreText}>Restaurer mes achats</Text>
         </TouchableOpacity>
@@ -174,10 +190,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
+  alreadyPremiumContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  alreadyPremiumEmoji: { fontSize: 72, marginBottom: Spacing.lg },
+  alreadyPremiumTitle: {
+    ...Typography.displayMedium,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  alreadyPremiumSub: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+  },
+  backBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.xl,
+    alignItems: 'center',
+    ...Shadow.sm,
+  },
+  backBtnText: { ...Typography.bodyMedium, color: '#FFF', fontWeight: '700' },
   hero: { alignItems: 'center', paddingVertical: Spacing.xl },
   heroEmoji: { fontSize: 64, marginBottom: Spacing.md },
   heroTitle: { ...Typography.displayMedium, color: Colors.text, textAlign: 'center' },
-  heroSubtitle: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  heroSubtitle: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 22,
+  },
   trialBanner: {
     backgroundColor: Colors.primary + '18',
     borderRadius: Radius.lg,

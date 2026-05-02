@@ -74,9 +74,16 @@ export default function HomeScreen() {
             placeholderTextColor={Colors.textTertiary}
             value={search}
             onChangeText={setSearch}
-            clearButtonMode="while-editing"
             returnKeyType="search"
           />
+          {search.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearch('')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.clearIcon}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -164,6 +171,12 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.text,
     padding: 0,
+  },
+  clearIcon: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    paddingLeft: 8,
+    fontWeight: '600',
   },
   sortRow: {
     flexDirection: 'row',

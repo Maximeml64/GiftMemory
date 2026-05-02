@@ -57,7 +57,7 @@ export default function GiversScreen() {
               }
               activeOpacity={0.8}
             >
-              <View style={styles.avatar}>
+              <View style={[styles.avatar, { backgroundColor: avatarColor(item.name) }]}>
                 <Text style={styles.avatarText}>
                   {item.name.charAt(0).toUpperCase()}
                 </Text>
@@ -111,7 +111,6 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,

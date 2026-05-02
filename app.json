@@ -3,9 +3,11 @@
     "name": "GiftMemory",
     "slug": "gift-memory",
     "version": "1.0.0",
+    "scheme": "giftmemory",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -13,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourname.giftmemory",
+      "bundleIdentifier": "com.maxime.giftmemory",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Pour prendre une photo du cadeau.",
         "NSPhotoLibraryUsageDescription": "Pour choisir une photo depuis la galerie.",
@@ -28,14 +31,24 @@
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.yourname.giftmemory"
+      "package": "com.maxime.giftmemory",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#E8734A",
+          "sounds": []
+        }
+      ],
       [
         "expo-image-picker",
         {
