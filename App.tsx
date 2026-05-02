@@ -112,7 +112,7 @@ export default function App() {
                   contentStyle: { backgroundColor: Colors.background },
                 }}
               >
-                <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+                <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false, title: 'Accueil' }} />
                 <Stack.Screen
                   name="AddGift"
                   component={AddGiftScreen}
