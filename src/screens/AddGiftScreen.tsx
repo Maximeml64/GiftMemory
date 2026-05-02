@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 
 import { RootStackParamList, Gift, Occasion, GiftCategory } from '../types';
 import { useGifts } from '../store/GiftsContext';
@@ -95,7 +95,7 @@ export default function AddGiftScreen() {
     }
     setSaving(true);
     try {
-      const id = existing?.id ?? uuidv4();
+      const id = existing?.id ?? Crypto.randomUUID();
       let finalImageUri = imageUri;
       if (newImageUri) {
         if (isEditing && existing?.imageUri && existing.imageUri !== newImageUri) {
@@ -124,7 +124,8 @@ export default function AddGiftScreen() {
       await saveGift(gift);
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Erreur', 'Impossible de sauvegarder.');
+      const msg = e instanceof Error ? e.message : String(e);
+      Alert.alert('Erreur', `Impossible de sauvegarder.\n${msg}`);
     } finally {
       setSaving(false);
     }

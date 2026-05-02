@@ -8,7 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 
 import { RootStackParamList, CalendarEvent, EventType } from '../types';
 import { useEvents } from '../store/EventsContext';
@@ -53,7 +53,7 @@ export default function AddEventScreen() {
     setSaving(true);
     try {
       const event: CalendarEvent = {
-        id: existing?.id ?? uuidv4(),
+        id: existing?.id ?? Crypto.randomUUID(),
         personName: personName.trim(),
         type,
         month,
@@ -66,7 +66,8 @@ export default function AddEventScreen() {
       await saveEvent(event);
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Erreur', 'Impossible de sauvegarder.');
+      const msg = e instanceof Error ? e.message : String(e);
+      Alert.alert('Erreur', `Impossible de sauvegarder.\n${msg}`);
     } finally {
       setSaving(false);
     }
