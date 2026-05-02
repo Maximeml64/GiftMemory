@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -20,7 +20,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Pour prendre une photo du cadeau.",
         "NSPhotoLibraryUsageDescription": "Pour choisir une photo depuis la galerie.",
-        "NSPhotoLibraryAddUsageDescription": "Pour sauvegarder les photos des cadeaux."
+        "NSPhotoLibraryAddUsageDescription": "Pour sauvegarder les photos des cadeaux.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -29,10 +30,12 @@
         "backgroundColor": "#FFF8F0"
       },
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_MEDIA_LOCATION"
       ],
       "package": "com.maxime.giftmemory",
       "versionCode": 1
@@ -64,6 +67,11 @@
           "isAccessMediaLocationEnabled": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e12cf3b3-e99d-43de-b7e8-13731d3e45d0"
+      }
+    }
   }
 }
