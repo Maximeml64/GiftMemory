@@ -131,7 +131,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <GiftCard
               gift={item}
-              onPress={() => navigation.navigate('GiftDetail', { giftId: item.id })}
+              onPress={() => navigation.navigate('GiftDetail', { giftId: item.id, backTitle: 'Cadeaux' })}
             />
           )}
         />

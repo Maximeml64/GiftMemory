@@ -122,11 +122,21 @@ export default function App() {
                     headerLeft: () => null,
                   })}
                 />
-                <Stack.Screen name="GiftDetail" component={GiftDetailScreen} options={{ title: '' }} />
+                <Stack.Screen
+                  name="GiftDetail"
+                  component={GiftDetailScreen}
+                  options={({ route }) => ({
+                    title: '',
+                    ...(route.params?.backTitle ? { headerBackTitle: route.params.backTitle } : {}),
+                  })}
+                />
                 <Stack.Screen
                   name="GiverDetail"
                   component={GiverDetailScreen}
-                  options={({ route }) => ({ title: route.params.giverName })}
+                  options={({ route }) => ({
+                    title: route.params.giverName,
+                    ...(route.params?.backTitle ? { headerBackTitle: route.params.backTitle } : {}),
+                  })}
                 />
                 <Stack.Screen
                   name="AddEvent"
@@ -137,7 +147,14 @@ export default function App() {
                     headerLeft: () => null,
                   })}
                 />
-                <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: '' }} />
+                <Stack.Screen
+                  name="EventDetail"
+                  component={EventDetailScreen}
+                  options={({ route }) => ({
+                    title: '',
+                    ...(route.params?.backTitle ? { headerBackTitle: route.params.backTitle } : {}),
+                  })}
+                />
                 <Stack.Screen
                   name="Paywall"
                   component={PaywallScreen}

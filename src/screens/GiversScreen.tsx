@@ -53,7 +53,7 @@ export default function GiversScreen() {
             <TouchableOpacity
               style={styles.card}
               onPress={() =>
-                navigation.navigate('GiverDetail', { giverName: item.name })
+                navigation.navigate('GiverDetail', { giverName: item.name, backTitle: 'Donneurs' })
               }
               activeOpacity={0.8}
             >

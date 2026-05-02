@@ -34,10 +34,10 @@ export interface CalendarEvent {
 export type RootStackParamList = {
   Main: undefined;
   AddGift: { giftId?: string } | undefined;
-  GiftDetail: { giftId: string };
-  GiverDetail: { giverName: string };
+  GiftDetail: { giftId: string; backTitle?: string };
+  GiverDetail: { giverName: string; backTitle?: string };
   AddEvent: { eventId?: string } | undefined;
-  EventDetail: { eventId: string };
+  EventDetail: { eventId: string; backTitle?: string };
   Paywall: undefined;
   Cgu: undefined;
   Privacy: undefined;

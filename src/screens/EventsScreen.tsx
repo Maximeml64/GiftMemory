@@ -73,7 +73,7 @@ export default function EventsScreen() {
           return (
             <TouchableOpacity
               style={[styles.card, isToday && styles.cardToday]}
-              onPress={() => navigation.navigate('EventDetail', { eventId: item.id })}
+              onPress={() => navigation.navigate('EventDetail', { eventId: item.id, backTitle: 'Événements' })}
               activeOpacity={0.8}
             >
               <View style={[styles.countdownBox, { backgroundColor: config.color + '18' }]}>
