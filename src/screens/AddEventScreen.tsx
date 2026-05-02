@@ -99,10 +99,10 @@ export default function AddEventScreen() {
           <View style={styles.form}>
             {/* Nom */}
             <View style={styles.field}>
-              <Text style={styles.label}>👤 Prénom / Nom</Text>
+              <Text style={styles.label}>{type === 'Autre' ? '📝 Description' : '👤 Prénom / Nom'}</Text>
               <TextInput
                 style={styles.input} value={personName} onChangeText={setPersonName}
-                placeholder="Ex: Mamie Suzanne" placeholderTextColor={Colors.textTertiary} maxLength={50}
+                placeholder={type === 'Autre' ? 'Ex: Réunion de famille, Vacances…' : 'Ex: Mamie Suzanne'} placeholderTextColor={Colors.textTertiary} maxLength={50}
               />
             </View>
 
