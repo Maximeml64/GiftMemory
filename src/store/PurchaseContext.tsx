@@ -7,8 +7,8 @@ import { Platform, Alert } from 'react-native';
 import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 
 const API_KEY = Platform.OS === 'ios'
-  ? 'appl_test_ktMTDcsmuIyXdseoUofGfOuzMeN'
-  : 'VOTRE_CLE_ANDROID';
+  ? (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '')
+  : (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '');
 
 interface PurchaseContextValue {
   isLoading: boolean;
