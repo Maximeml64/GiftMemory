@@ -39,8 +39,6 @@ export type RootStackParamList = {
   AddEvent: { eventId?: string } | undefined;
   EventDetail: { eventId: string; backTitle?: string };
   Paywall: undefined;
-  Cgu: undefined;
-  Privacy: undefined;
 };
 
 export type TabParamList = {

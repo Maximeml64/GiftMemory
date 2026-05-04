@@ -24,8 +24,6 @@ import GiverDetailScreen from './src/screens/GiverDetailScreen';
 import AddEventScreen from './src/screens/AddEventScreen';
 import EventDetailScreen from './src/screens/EventDetailScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
-import CguScreen from './src/screens/CguScreen';
-import PrivacyScreen from './src/screens/PrivacyScreen';
 import OnboardingScreen, { hasSeenOnboarding } from './src/screens/OnboardingScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -160,8 +158,7 @@ export default function App() {
                   component={PaywallScreen}
                   options={{ presentation: 'modal', headerShown: false }}
                 />
-                <Stack.Screen name="Cgu" component={CguScreen} options={{ title: "Conditions d'utilisation" }} />
-                <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Confidentialité' }} />
+
               </Stack.Navigator>
             </NavigationContainer>
           </PurchaseProvider>

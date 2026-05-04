@@ -7,6 +7,9 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types';
+
+const PRIVACY_POLICY_URL = 'https://momentous-locket-2af.notion.site/Politique-de-Confidentialit-GiftMemory-35684071bf3e803fafecdc548d553ef5';
+const CGU_URL = 'https://momentous-locket-2af.notion.site/Conditions-G-n-rales-d-Utilisation-GiftMemory-35684071bf3e80288fd1f4947a1928d2';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../utils/theme';
 import { usePurchase } from '../store/PurchaseContext';
 
@@ -65,13 +68,13 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="📄"
             label="Conditions générales d'utilisation"
-            onPress={() => navigation.navigate('Cgu')}
+            onPress={() => Linking.openURL(CGU_URL)}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="🔒"
             label="Politique de confidentialité"
-            onPress={() => navigation.navigate('Privacy')}
+            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
           />
         </View>
 
