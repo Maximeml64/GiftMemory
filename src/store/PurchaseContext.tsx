@@ -1,14 +1,21 @@
 // src/store/PurchaseContext.tsx
 
 import React, {
-  createContext, useContext, useEffect, useState, useCallback, ReactNode,
+  createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode,
 } from 'react';
 import { Platform, Alert } from 'react-native';
+import Constants from 'expo-constants';
 import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
+
+const ENTITLEMENT_ID = 'premium';
 
 const API_KEY = Platform.OS === 'ios'
   ? (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '')
   : (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '');
+
+const isExpoGo =
+  (Constants.appOwnership as string) === 'expo' ||
+  Constants.executionEnvironment === 'storeClient';
 
 interface PurchaseContextValue {
   isLoading: boolean;
@@ -24,16 +31,28 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   function checkPremium(info: CustomerInfo) {
-    const active = Object.keys(info.entitlements.active).length > 0;
+    const active = !!info.entitlements.active[ENTITLEMENT_ID];
     setIsPremium(active);
   }
 
   useEffect(() => {
+    if (isExpoGo || !API_KEY) {
+      console.warn('[RC] Skipping RevenueCat init —', isExpoGo ? 'Expo Go (use dev build for RC features)' : 'API key not configured');
+      setIsLoading(false);
+      return;
+    }
+
     async function init() {
       try {
         Purchases.configure({ apiKey: API_KEY });
+
+        // Listener setup inside try so Expo Go failures are caught cleanly
+        const sub = Purchases.addCustomerInfoUpdateListener(checkPremium);
+        if (typeof sub === 'function') unsubscribeRef.current = sub;
+
         const info = await Purchases.getCustomerInfo();
         checkPremium(info);
         const offerings = await Purchases.getOfferings();
@@ -46,13 +65,11 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }
+
     init();
 
-    const unsubscribe = Purchases.addCustomerInfoUpdateListener((info) => {
-      checkPremium(info);
-    });
     return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
+      if (unsubscribeRef.current) unsubscribeRef.current();
     };
   }, []);
 
@@ -60,7 +77,7 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       checkPremium(customerInfo);
-      return Object.keys(customerInfo.entitlements.active).length > 0;
+      return !!customerInfo.entitlements.active[ENTITLEMENT_ID];
     } catch (e: any) {
       if (!e.userCancelled) {
         Alert.alert('Erreur', "L'achat a échoué. Réessayez.");
@@ -73,7 +90,7 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
     try {
       const info = await Purchases.restorePurchases();
       checkPremium(info);
-      const active = Object.keys(info.entitlements.active).length > 0;
+      const active = !!info.entitlements.active[ENTITLEMENT_ID];
       Alert.alert(
         active ? 'Abonnement restauré ✓' : 'Aucun achat trouvé',
         active ? 'Votre accès Premium est actif.' : 'Aucun achat à restaurer sur ce compte.',
