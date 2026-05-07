@@ -16,6 +16,10 @@ web-build/
 
 # Metro
 .metro-health-check*
+.metro-cache/
+
+# Claude Code local state
+.claude/
 
 # Debug
 npm-debug.*
