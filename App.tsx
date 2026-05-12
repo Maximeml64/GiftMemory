@@ -5,8 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Cake, Gift, Settings as SettingsIcon, Users } from 'lucide-react-native';
 import {
   useFonts,
   CormorantGaramond_400Regular,
@@ -43,6 +44,19 @@ import OnboardingScreen, { hasSeenOnboarding } from './src/screens/OnboardingScr
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
+type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const GiftIcon = Gift as unknown as LucideIcon;
+const CakeIcon = Cake as unknown as LucideIcon;
+const UsersIcon = Users as unknown as LucideIcon;
+const SettingsLucide = SettingsIcon as unknown as LucideIcon;
+
+const TAB_ICONS: Record<string, LucideIcon> = {
+  Home: GiftIcon,
+  Events: CakeIcon,
+  Givers: UsersIcon,
+  Settings: SettingsLucide,
+};
+
 function TabNavigator() {
   return (
     <Tab.Navigator
@@ -53,28 +67,21 @@ function TabNavigator() {
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopColor: COLORS.border,
-          borderTopWidth: 1,
-          height: 80,
-          paddingBottom: 20,
-          paddingTop: 8,
+          borderTopWidth: 0.5,
+          height: 84,
+          paddingBottom: 22,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontFamily: 'Inter_500Medium',
           fontSize: 11,
-          marginTop: 2,
+          marginTop: 4,
+          letterSpacing: 0.2,
         },
-        tabBarIcon: ({ focused }) => {
-          const icons: Record<string, string> = {
-            Home: '🎁',
-            Events: '🎂',
-            Givers: '👥',
-            Settings: '⚙️',
-          };
-          return (
-            <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
-              {icons[route.name] ?? '●'}
-            </Text>
-          );
+        tabBarIcon: ({ focused, color }) => {
+          const Icon = TAB_ICONS[route.name];
+          if (!Icon) return null;
+          return <Icon color={color} size={focused ? 22 : 20} />;
         },
       })}
     >
