@@ -1,19 +1,32 @@
 // src/screens/SettingsScreen.tsx
 
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, Linking, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ChevronRight, FileText, Lock, Mail, Sparkles } from 'lucide-react-native';
 
 import { RootStackParamList } from '../types';
+import { usePurchase } from '../store/PurchaseContext';
+import {
+  Card,
+  Divider,
+  ScreenWrapper,
+  StyledText,
+} from '../components/ui';
+import { COLORS, RADIUS, SPACING } from '../utils/theme';
 
 const PRIVACY_POLICY_URL = 'https://momentous-locket-2af.notion.site/Politique-de-Confidentialit-GiftMemory-35684071bf3e803fafecdc548d553ef5';
 const CGU_URL = 'https://momentous-locket-2af.notion.site/Conditions-G-n-rales-d-Utilisation-GiftMemory-35684071bf3e80288fd1f4947a1928d2';
-import { Colors, Radius, Shadow, Spacing, Typography } from '../utils/theme';
-import { usePurchase } from '../store/PurchaseContext';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const ChevronIcon = ChevronRight as unknown as LucideIcon;
+const FileTextIcon = FileText as unknown as LucideIcon;
+const LockIcon = Lock as unknown as LucideIcon;
+const MailIcon = Mail as unknown as LucideIcon;
+const SparklesIcon = Sparkles as unknown as LucideIcon;
 
 export default function SettingsScreen() {
   const navigation = useNavigation<Nav>();
@@ -30,134 +43,144 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Paramètres</Text>
+    <ScreenWrapper scroll>
+      <StyledText variant="display" style={{ marginTop: SPACING.sm, marginBottom: SPACING.lg }}>
+        Réglages
+      </StyledText>
 
-        {/* App info */}
-        <View style={styles.appInfo}>
-          <Text style={styles.appIcon}>🎁</Text>
-          <Text style={styles.appName}>GiftMemory</Text>
-          <Text style={styles.appVersion}>Version 1.0.0</Text>
-          {isPremium && (
-            <View style={styles.premiumTag}>
-              <Text style={styles.premiumTagText}>✨ Premium actif</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Premium banner si pas premium */}
-        {!isPremium && (
-          <TouchableOpacity
-            style={styles.premiumBanner}
-            onPress={() => navigation.navigate('Paywall')}
-            activeOpacity={0.85}
+      {/* App info card */}
+      <Card variant="soft" padding="xl" style={{ alignItems: 'center', marginBottom: SPACING.lg }}>
+        <StyledText style={{ fontSize: 56, lineHeight: 64, marginBottom: SPACING.sm }}>🎁</StyledText>
+        <StyledText variant="h2" align="center">GiftMemory</StyledText>
+        <StyledText variant="caption" color={COLORS.textSecondary} style={{ marginTop: 4 }}>
+          Version 1.0.0
+        </StyledText>
+        {isPremium ? (
+          <View
+            style={{
+              marginTop: SPACING.md,
+              backgroundColor: COLORS.primaryMuted,
+              paddingVertical: 4,
+              paddingHorizontal: SPACING.md,
+              borderRadius: RADIUS.full,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: SPACING.xs,
+            }}
           >
-            <Text style={styles.premiumBannerEmoji}>✨</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.premiumBannerTitle}>Passer à Premium</Text>
-              <Text style={styles.premiumBannerSub}>Cadeaux et événements illimités</Text>
-            </View>
-            <Text style={styles.premiumBannerChevron}>›</Text>
-          </TouchableOpacity>
-        )}
+            <SparklesIcon color={COLORS.primary} size={14} />
+            <StyledText variant="smallMedium" color={COLORS.primary}>
+              Premium actif
+            </StyledText>
+          </View>
+        ) : null}
+      </Card>
 
-        {/* Section Légal */}
-        <Text style={styles.sectionTitle}>Légal</Text>
-        <View style={styles.card}>
-          <SettingsRow
-            icon="📄"
-            label="Conditions générales d'utilisation"
-            onPress={() => Linking.openURL(CGU_URL)}
-          />
-          <View style={styles.divider} />
-          <SettingsRow
-            icon="🔒"
-            label="Politique de confidentialité"
-            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
-          />
-        </View>
+      {/* Premium banner */}
+      {!isPremium ? (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('Paywall')}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: SPACING.md,
+            backgroundColor: COLORS.primary,
+            borderRadius: RADIUS.lg,
+            padding: SPACING.base,
+            marginBottom: SPACING.xl,
+          }}
+        >
+          <SparklesIcon color={COLORS.textInverse} size={28} />
+          <View style={{ flex: 1 }}>
+            <StyledText variant="bodyMedium" color={COLORS.textInverse}>
+              Passer à Premium
+            </StyledText>
+            <StyledText variant="small" color={'rgba(253,249,244,0.78)'}>
+              Cadeaux et événements illimités
+            </StyledText>
+          </View>
+          <ChevronIcon color={COLORS.textInverse} size={20} />
+        </TouchableOpacity>
+      ) : null}
 
-        {/* Section Support */}
-        <Text style={styles.sectionTitle}>Support</Text>
-        <View style={styles.card}>
-          <SettingsRow
-            icon="✉️"
-            label="Nous contacter"
-            sublabel="m.maurylaribiere@gmail.com"
-            onPress={openMail}
-          />
-        </View>
+      {/* Section Légal */}
+      <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm, marginLeft: SPACING.xs }}>
+        Légal
+      </StyledText>
+      <Card padding="none" style={{ marginBottom: SPACING.lg, overflow: 'hidden' }}>
+        <SettingsRow
+          icon={<FileTextIcon color={COLORS.textSecondary} size={20} />}
+          label="Conditions générales d'utilisation"
+          onPress={() => Linking.openURL(CGU_URL)}
+        />
+        <Divider marginVertical={0} inset={SPACING.xl + 20} />
+        <SettingsRow
+          icon={<LockIcon color={COLORS.textSecondary} size={20} />}
+          label="Politique de confidentialité"
+          onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+        />
+      </Card>
 
-        <Text style={styles.footer}>
-          GiftMemory • Fait avec ❤️{'\n'}
-          Toutes vos données sont stockées localement sur votre appareil.
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
+      {/* Section Support */}
+      <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm, marginLeft: SPACING.xs }}>
+        Support
+      </StyledText>
+      <Card padding="none" style={{ marginBottom: SPACING.xl, overflow: 'hidden' }}>
+        <SettingsRow
+          icon={<MailIcon color={COLORS.textSecondary} size={20} />}
+          label="Nous contacter"
+          sublabel="m.maurylaribiere@gmail.com"
+          onPress={openMail}
+        />
+      </Card>
+
+      <StyledText
+        variant="caption"
+        align="center"
+        color={COLORS.textTertiary}
+        style={{ marginTop: SPACING.sm }}
+      >
+        GiftMemory · Fait avec attention{'\n'}
+        Toutes vos données restent sur votre appareil.
+      </StyledText>
+    </ScreenWrapper>
   );
 }
 
-function SettingsRow({ icon, label, sublabel, onPress }: {
-  icon: string; label: string; sublabel?: string; onPress: () => void;
+function SettingsRow({
+  icon,
+  label,
+  sublabel,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sublabel?: string;
+  onPress: () => void;
 }) {
   return (
-    <TouchableOpacity style={rowStyles.row} onPress={onPress} activeOpacity={0.7}>
-      <Text style={rowStyles.icon}>{icon}</Text>
-      <View style={rowStyles.text}>
-        <Text style={rowStyles.label}>{label}</Text>
-        {sublabel && <Text style={rowStyles.sublabel}>{sublabel}</Text>}
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.base,
+        gap: SPACING.md,
+      }}
+    >
+      {icon}
+      <View style={{ flex: 1 }}>
+        <StyledText variant="bodyMedium">{label}</StyledText>
+        {sublabel ? (
+          <StyledText variant="caption" color={COLORS.textSecondary} style={{ marginTop: 2 }}>
+            {sublabel}
+          </StyledText>
+        ) : null}
       </View>
-      <Text style={rowStyles.chevron}>›</Text>
+      <ChevronIcon color={COLORS.textTertiary} size={20} />
     </TouchableOpacity>
   );
 }
-
-const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: Spacing.md },
-  icon: { fontSize: 20, marginRight: 12 },
-  text: { flex: 1 },
-  label: { ...Typography.bodyMedium, color: Colors.text },
-  sublabel: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
-  chevron: { fontSize: 20, color: Colors.textTertiary },
-});
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 40 },
-  title: { ...Typography.displayMedium, color: Colors.text, paddingTop: Spacing.sm, marginBottom: Spacing.lg },
-  appInfo: {
-    alignItems: 'center', paddingVertical: Spacing.xl, backgroundColor: Colors.surface,
-    borderRadius: Radius.xl, marginBottom: Spacing.lg, ...Shadow.sm,
-  },
-  appIcon: { fontSize: 56, marginBottom: 8 },
-  appName: { ...Typography.titleLarge, color: Colors.text },
-  appVersion: { ...Typography.caption, color: Colors.textSecondary, marginTop: 4 },
-  premiumTag: {
-    marginTop: 10, backgroundColor: Colors.primary + '18',
-    paddingVertical: 4, paddingHorizontal: 12, borderRadius: Radius.full,
-  },
-  premiumTagText: { ...Typography.captionMedium, color: Colors.primary, fontWeight: '700' },
-  premiumBanner: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primary,
-    borderRadius: Radius.lg, padding: Spacing.md, marginBottom: Spacing.xl,
-    gap: 12, ...Shadow.md,
-  },
-  premiumBannerEmoji: { fontSize: 28 },
-  premiumBannerTitle: { ...Typography.bodyMedium, color: '#FFF', fontWeight: '700' },
-  premiumBannerSub: { ...Typography.caption, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
-  premiumBannerChevron: { fontSize: 24, color: '#FFF', fontWeight: '300' },
-  sectionTitle: {
-    ...Typography.captionMedium, color: Colors.textSecondary, textTransform: 'uppercase',
-    letterSpacing: 0.8, marginBottom: 8, marginLeft: 4,
-  },
-  card: {
-    backgroundColor: Colors.surface, borderRadius: Radius.lg,
-    marginBottom: Spacing.lg, overflow: 'hidden', ...Shadow.sm,
-  },
-  divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: Spacing.md },
-  footer: {
-    ...Typography.caption, color: Colors.textTertiary,
-    textAlign: 'center', lineHeight: 18, marginTop: Spacing.md,
-  },
-});
