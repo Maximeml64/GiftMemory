@@ -1,39 +1,49 @@
 // src/screens/OnboardingScreen.tsx
 
-import React, { useState, useRef } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity,
-  FlatList, Dimensions,
-} from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Dimensions, FlatList, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, Radius, Spacing, Typography, Shadow } from '../utils/theme';
+
+import { Button, StyledText } from '../components/ui';
+import { COLORS, OCCASIONS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
 const { width } = Dimensions.get('window');
 
 const ONBOARDING_KEY = '@gift_memory_onboarding_done';
 
-const SLIDES = [
+interface Slide {
+  id: string;
+  emoji: string;
+  title: string;
+  subtitle: string;
+  bg: string;
+}
+
+const SLIDES: Slide[] = [
   {
     id: '1',
     emoji: '🎁',
-    title: 'Ne plus jamais oublier',
-    subtitle: 'Gardez une trace de tous les cadeaux reçus. Qui vous a offert quoi, pour quelle occasion.',
-    bg: '#FFF8F0',
+    title: 'Une boîte\nà souvenirs',
+    subtitle:
+      'Notez les cadeaux que l\'on vous offre. Qui, quand, pour quelle occasion — pour ne plus jamais oublier.',
+    bg: OCCASIONS.Anniversaire.bg,
   },
   {
     id: '2',
     emoji: '🎂',
-    title: 'Rappels d\'anniversaire',
-    subtitle: 'Ajoutez les anniversaires et événements importants. Recevez une notification avant qu\'il ne soit trop tard.',
-    bg: '#F0F8FF',
+    title: 'Les dates\nqui comptent',
+    subtitle:
+      'Anniversaires, fêtes, événements importants : recevez un rappel discret avant qu\'il ne soit trop tard.',
+    bg: OCCASIONS.Naissance.bg,
   },
   {
     id: '3',
     emoji: '✨',
-    title: 'Simple et rapide',
-    subtitle: 'Une photo, un nom, un donneur. Vos souvenirs sont sauvegardés localement, en toute confidentialité.',
-    bg: '#F8F0FF',
+    title: 'Simple\net discret',
+    subtitle:
+      'Une photo, un nom, un donneur. Vos souvenirs restent sur votre appareil, en toute confidentialité.',
+    bg: OCCASIONS.Mariage.bg,
   },
 ];
 
@@ -43,7 +53,7 @@ interface Props {
 
 export default function OnboardingScreen({ onDone }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<Slide>>(null);
 
   async function finish() {
     await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
@@ -62,7 +72,7 @@ export default function OnboardingScreen({ onDone }: Props) {
   const isLast = currentIndex === SLIDES.length - 1;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['top', 'bottom']}>
       <FlatList
         ref={flatListRef}
         data={SLIDES}
@@ -76,43 +86,86 @@ export default function OnboardingScreen({ onDone }: Props) {
           setCurrentIndex(index);
         }}
         renderItem={({ item }) => (
-          <View style={[styles.slide, { width }]}>
-            <View style={[styles.emojiContainer, { backgroundColor: item.bg }]}>
-              <Text style={styles.emoji}>{item.emoji}</Text>
+          <View
+            style={{
+              width,
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: SPACING.xl,
+              paddingBottom: 140,
+            }}
+          >
+            <View
+              style={{
+                width: 180,
+                height: 180,
+                borderRadius: RADIUS.full,
+                backgroundColor: item.bg,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: SPACING.xxl,
+                ...SHADOWS.md,
+              }}
+            >
+              <StyledText style={{ fontSize: 80, lineHeight: 90 }}>{item.emoji}</StyledText>
             </View>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
+            <StyledText variant="h1" align="center" style={{ marginBottom: SPACING.md }}>
+              {item.title}
+            </StyledText>
+            <StyledText
+              variant="body"
+              align="center"
+              color={COLORS.textSecondary}
+              style={{ maxWidth: 320 }}
+            >
+              {item.subtitle}
+            </StyledText>
           </View>
         )}
       />
 
       {/* Dots */}
-      <View style={styles.dots}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: SPACING.sm,
+          marginBottom: SPACING.xl,
+        }}
+      >
         {SLIDES.map((_, i) => (
           <View
             key={i}
-            style={[styles.dot, i === currentIndex && styles.dotActive]}
+            style={{
+              width: i === currentIndex ? 24 : 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: i === currentIndex ? COLORS.primary : COLORS.border,
+            }}
           />
         ))}
       </View>
 
       {/* Buttons */}
-      <View style={styles.buttons}>
-        <TouchableOpacity
-          style={styles.nextBtn}
+      <View style={{ paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg, gap: SPACING.sm }}>
+        <Button
+          label={isLast ? 'Commencer' : 'Suivant'}
           onPress={next}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.nextBtnText}>
-            {isLast ? 'Commencer' : 'Suivant'}
-          </Text>
-        </TouchableOpacity>
-
-        {!isLast && (
-          <TouchableOpacity onPress={finish} activeOpacity={0.7} style={styles.skipBtn}>
-            <Text style={styles.skipText}>Passer</Text>
+          fullWidth
+          size="lg"
+        />
+        {!isLast ? (
+          <TouchableOpacity
+            onPress={finish}
+            activeOpacity={0.7}
+            style={{ alignItems: 'center', paddingVertical: SPACING.sm }}
+          >
+            <StyledText variant="body" color={COLORS.textSecondary}>
+              Passer
+            </StyledText>
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -122,78 +175,3 @@ export async function hasSeenOnboarding(): Promise<boolean> {
   const val = await AsyncStorage.getItem(ONBOARDING_KEY);
   return val === 'true';
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  slide: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 120,
-  },
-  emojiContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xl,
-    ...Shadow.md,
-  },
-  emoji: { fontSize: 72 },
-  title: {
-    ...Typography.displayMedium,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
-  subtitle: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: Spacing.xl,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.border,
-  },
-  dotActive: {
-    width: 24,
-    backgroundColor: Colors.primary,
-  },
-  buttons: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  nextBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: 16,
-    alignItems: 'center',
-    ...Shadow.md,
-  },
-  nextBtnText: {
-    ...Typography.bodyMedium,
-    color: '#FFF',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  skipBtn: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  skipText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-  },
-});

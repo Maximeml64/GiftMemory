@@ -1,42 +1,49 @@
 // src/screens/PaywallScreen.tsx
 
-import React, { useState } from 'react';
-import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PurchasesPackage } from 'react-native-purchases';
+import { Check, X } from 'lucide-react-native';
 
 import { RootStackParamList } from '../types';
 import { usePurchase } from '../store/PurchaseContext';
-import { Colors, Radius, Shadow, Spacing, Typography } from '../utils/theme';
+import { Button, Card, StyledText } from '../components/ui';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const CheckIcon = Check as unknown as LucideIcon;
+const XIcon = X as unknown as LucideIcon;
 
 const FEATURES = [
-  '🎁 Cadeaux illimités',
-  '🎂 Événements & rappels illimités',
-  '📸 Photos haute qualité',
-  '👥 Donneurs illimités',
-  '🔔 Notifications push',
-  '✨ Accès à toutes les futures fonctionnalités',
+  'Cadeaux illimités',
+  'Événements et rappels illimités',
+  'Photos haute qualité',
+  'Donneurs illimités',
+  'Notifications push',
+  'Accès à toutes les futures fonctionnalités',
 ];
 
-function packageLabel(pkg: PurchasesPackage): { title: string; price: string; badge?: string; savings?: string } {
+function packageLabel(pkg: PurchasesPackage): {
+  title: string;
+  price: string;
+  badge?: string;
+  savings?: string;
+} {
   const id = pkg.packageType;
   const price = pkg.product.priceString;
 
   if (id === 'MONTHLY' || pkg.identifier === '$rc_monthly') {
-    return { title: 'Mensuel', price: `${price} / mois`, badge: '7 jours gratuits' };
+    return { title: 'Mensuel', price: `${price} / mois`, badge: '7 jours offerts' };
   }
   if (id === 'ANNUAL' || pkg.identifier === '$rc_annual') {
-    return { title: 'Annuel', price: `${price} / an`, badge: '🔥 Le plus populaire', savings: 'Économisez 50%' };
+    return { title: 'Annuel', price: `${price} / an`, badge: 'Populaire', savings: 'Économisez 50 %' };
   }
   if (id === 'LIFETIME' || pkg.identifier === '$rc_lifetime') {
-    return { title: 'À vie', price: price, badge: '💎 Meilleure offre' };
+    return { title: 'À vie', price: price, badge: 'Meilleure offre' };
   }
   return { title: pkg.product.title, price: price };
 }
@@ -47,28 +54,36 @@ export default function PaywallScreen() {
   const [selectedPkg, setSelectedPkg] = useState<PurchasesPackage | null>(null);
   const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (packages.length > 0 && !selectedPkg) {
       const annual = packages.find((p) => p.identifier === '$rc_annual') ?? packages[0];
       setSelectedPkg(annual);
     }
-  }, [packages]);
+  }, [packages, selectedPkg]);
 
   if (isPremium) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
-        <View style={styles.alreadyPremiumContainer}>
-          <Text style={styles.alreadyPremiumEmoji}>✨</Text>
-          <Text style={styles.alreadyPremiumTitle}>Vous êtes déjà Premium !</Text>
-          <Text style={styles.alreadyPremiumSub}>
-            Profitez de toutes les fonctionnalités sans limite.
-          </Text>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-            <Text style={styles.backBtnText}>Retour</Text>
-          </TouchableOpacity>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['top', 'bottom']}>
+        <CloseButton onPress={() => navigation.goBack()} />
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: SPACING.xl,
+            gap: SPACING.md,
+          }}
+        >
+          <StyledText style={{ fontSize: 80, lineHeight: 90 }}>✨</StyledText>
+          <StyledText variant="h1" align="center">
+            Vous êtes Premium
+          </StyledText>
+          <StyledText variant="body" align="center" color={COLORS.textSecondary} style={{ maxWidth: 320 }}>
+            Toutes les fonctionnalités sont accessibles sans limite.
+          </StyledText>
+          <View style={{ marginTop: SPACING.md }}>
+            <Button label="Retour" onPress={() => navigation.goBack()} size="lg" />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -86,217 +101,198 @@ export default function PaywallScreen() {
   const isMonthly = selectedPkg?.identifier === '$rc_monthly';
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['top', 'bottom']}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: SPACING.lg, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <CloseButton onPress={() => navigation.goBack()} />
 
-        <View style={styles.hero}>
-          <Text style={styles.heroEmoji}>🎁</Text>
-          <Text style={styles.heroTitle}>GiftMemory Premium</Text>
-          <Text style={styles.heroSubtitle}>
-            Ne ratez plus jamais un anniversaire.{'\n'}Gardez tous vos souvenirs.
-          </Text>
+        {/* Hero */}
+        <View style={{ alignItems: 'center', paddingVertical: SPACING.xl, gap: SPACING.sm }}>
+          <StyledText style={{ fontSize: 64, lineHeight: 72 }}>🎁</StyledText>
+          <StyledText variant="display" align="center">
+            GiftMemory Premium
+          </StyledText>
+          <StyledText
+            variant="body"
+            align="center"
+            color={COLORS.textSecondary}
+            style={{ maxWidth: 320, marginTop: SPACING.xs }}
+          >
+            Ne ratez plus jamais un anniversaire. Gardez tous vos souvenirs.
+          </StyledText>
         </View>
 
-        {isMonthly && (
-          <View style={styles.trialBanner}>
-            <Text style={styles.trialText}>✨ 7 jours gratuits, puis {label?.price}</Text>
+        {/* Trial banner */}
+        {isMonthly && label ? (
+          <View
+            style={{
+              backgroundColor: COLORS.primaryMuted,
+              borderWidth: 1,
+              borderColor: COLORS.primary,
+              borderRadius: RADIUS.lg,
+              padding: SPACING.md,
+              alignItems: 'center',
+              marginBottom: SPACING.md,
+            }}
+          >
+            <StyledText variant="bodyMedium" color={COLORS.primary}>
+              ✨ 7 jours gratuits, puis {label.price}
+            </StyledText>
           </View>
-        )}
+        ) : null}
 
-        <View style={styles.featuresCard}>
+        {/* Features */}
+        <Card padding="base" style={{ marginBottom: SPACING.lg }}>
           {FEATURES.map((f) => (
-            <View key={f} style={styles.featureRow}>
-              <Text style={styles.featureCheck}>✓</Text>
-              <Text style={styles.featureText}>{f}</Text>
+            <View
+              key={f}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: SPACING.md,
+                paddingVertical: SPACING.xs + 3,
+              }}
+            >
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  backgroundColor: COLORS.successMuted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <CheckIcon color={COLORS.success} size={14} />
+              </View>
+              <StyledText variant="body" style={{ flex: 1 }}>
+                {f}
+              </StyledText>
             </View>
           ))}
-        </View>
+        </Card>
 
+        {/* Packages */}
         {packages.length === 0 ? (
-          <ActivityIndicator color={Colors.primary} style={{ marginVertical: Spacing.xl }} />
+          <ActivityIndicator color={COLORS.primary} style={{ marginVertical: SPACING.xl }} />
         ) : (
-          <View style={styles.packagesContainer}>
+          <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.lg }}>
             {packages.map((pkg) => {
               const info = packageLabel(pkg);
               const selected = selectedPkg?.identifier === pkg.identifier;
               return (
                 <TouchableOpacity
                   key={pkg.identifier}
-                  style={[styles.packageCard, selected && styles.packageCardSelected]}
-                  onPress={() => setSelectedPkg(pkg)}
                   activeOpacity={0.8}
+                  onPress={() => setSelectedPkg(pkg)}
+                  style={{
+                    flex: 1,
+                    minHeight: 110,
+                    backgroundColor: selected ? COLORS.primaryMuted : COLORS.surface,
+                    borderRadius: RADIUS.lg,
+                    padding: SPACING.md,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: selected ? COLORS.primary : COLORS.border,
+                    ...(selected ? {} : SHADOWS.sm),
+                  }}
                 >
-                  {info.badge && (
-                    <View style={[styles.packageBadge, selected && styles.packageBadgeSelected]}>
-                      <Text style={styles.packageBadgeText}>{info.badge}</Text>
+                  {info.badge ? (
+                    <View
+                      style={{
+                        backgroundColor: selected ? COLORS.primary : COLORS.surfaceAlt,
+                        borderRadius: 999,
+                        paddingVertical: 2,
+                        paddingHorizontal: SPACING.sm,
+                        marginBottom: SPACING.xs,
+                      }}
+                    >
+                      <StyledText
+                        variant="caption"
+                        color={selected ? COLORS.textInverse : COLORS.textSecondary}
+                      >
+                        {info.badge}
+                      </StyledText>
                     </View>
-                  )}
-                  <Text style={[styles.packageTitle, selected && styles.packageTitleSelected]}>
+                  ) : null}
+                  <StyledText
+                    variant="bodyMedium"
+                    color={selected ? COLORS.primary : COLORS.textSecondary}
+                    align="center"
+                  >
                     {info.title}
-                  </Text>
-                  <Text style={[styles.packagePrice, selected && styles.packagePriceSelected]}>
+                  </StyledText>
+                  <StyledText
+                    variant="caption"
+                    color={selected ? COLORS.text : COLORS.textSecondary}
+                    align="center"
+                    style={{ marginTop: 4 }}
+                  >
                     {info.price}
-                  </Text>
-                  {info.savings && (
-                    <Text style={styles.packageSavings}>{info.savings}</Text>
-                  )}
+                  </StyledText>
+                  {info.savings ? (
+                    <StyledText variant="caption" color={COLORS.success} align="center" style={{ marginTop: 4 }}>
+                      {info.savings}
+                    </StyledText>
+                  ) : null}
                 </TouchableOpacity>
               );
             })}
           </View>
         )}
 
-        <TouchableOpacity
-          style={[styles.ctaBtn, (loading || !selectedPkg) && styles.ctaBtnDisabled]}
+        <Button
+          label={isMonthly ? "Commencer l'essai gratuit" : 'Choisir cette offre'}
           onPress={handlePurchase}
-          disabled={loading || !selectedPkg}
-          activeOpacity={0.85}
+          loading={loading}
+          disabled={!selectedPkg}
+          fullWidth
+          size="lg"
+        />
+
+        <TouchableOpacity
+          onPress={restorePurchases}
+          activeOpacity={0.7}
+          style={{ alignItems: 'center', paddingVertical: SPACING.md }}
         >
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.ctaText}>
-              {isMonthly ? "Commencer l'essai gratuit" : 'Choisir cette offre'}
-            </Text>
-          )}
+          <StyledText variant="body" color={COLORS.textSecondary}>
+            Restaurer mes achats
+          </StyledText>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={restorePurchases} activeOpacity={0.7} style={styles.restoreBtn}>
-          <Text style={styles.restoreText}>Restaurer mes achats</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.legal}>
+        <StyledText
+          variant="caption"
+          align="center"
+          color={COLORS.textTertiary}
+          style={{ marginTop: SPACING.sm }}
+        >
           L'abonnement se renouvelle automatiquement. Annulable à tout moment depuis les réglages de l'App Store. Sans engagement pour l'offre à vie.
-        </Text>
+        </StyledText>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { paddingHorizontal: Spacing.lg, paddingBottom: 40 },
-  closeBtn: {
-    alignSelf: 'flex-end',
-    marginTop: Spacing.sm,
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.shimmer,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: { fontSize: 16, color: Colors.textSecondary, fontWeight: '600' },
-  alreadyPremiumContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-  },
-  alreadyPremiumEmoji: { fontSize: 72, marginBottom: Spacing.lg },
-  alreadyPremiumTitle: {
-    ...Typography.displayMedium,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  alreadyPremiumSub: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: Spacing.xl,
-  },
-  backBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-    ...Shadow.sm,
-  },
-  backBtnText: { ...Typography.bodyMedium, color: '#FFF', fontWeight: '700' },
-  hero: { alignItems: 'center', paddingVertical: Spacing.xl },
-  heroEmoji: { fontSize: 64, marginBottom: Spacing.md },
-  heroTitle: { ...Typography.displayMedium, color: Colors.text, textAlign: 'center' },
-  heroSubtitle: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 22,
-  },
-  trialBanner: {
-    backgroundColor: Colors.primary + '18',
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.primary + '40',
-  },
-  trialText: { ...Typography.bodyMedium, color: Colors.primary, fontWeight: '600' },
-  featuresCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    ...Shadow.sm,
-  },
-  featureRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
-  featureCheck: { fontSize: 16, color: Colors.success, marginRight: 10, fontWeight: '700' },
-  featureText: { ...Typography.body, color: Colors.text, flex: 1 },
-  packagesContainer: { flexDirection: 'row', gap: 10, marginBottom: Spacing.lg },
-  packageCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.border,
-    ...Shadow.sm,
-    minHeight: 100,
-    justifyContent: 'center',
-  },
-  packageCardSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '08',
-  },
-  packageBadge: {
-    backgroundColor: Colors.shimmer,
-    borderRadius: Radius.full,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    marginBottom: 6,
-  },
-  packageBadgeSelected: { backgroundColor: Colors.primary + '20' },
-  packageBadgeText: { ...Typography.captionMedium, color: Colors.textSecondary, textAlign: 'center' },
-  packageTitle: { ...Typography.bodyMedium, color: Colors.textSecondary, textAlign: 'center' },
-  packageTitleSelected: { color: Colors.primary, fontWeight: '700' },
-  packagePrice: { ...Typography.caption, color: Colors.textSecondary, textAlign: 'center', marginTop: 4 },
-  packagePriceSelected: { color: Colors.text },
-  packageSavings: { ...Typography.captionMedium, color: Colors.success, marginTop: 4, textAlign: 'center' },
-  ctaBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: 16,
-    alignItems: 'center',
-    ...Shadow.md,
-    marginBottom: Spacing.md,
-  },
-  ctaBtnDisabled: { opacity: 0.6 },
-  ctaText: { ...Typography.bodyMedium, color: '#FFF', fontWeight: '700', fontSize: 16 },
-  restoreBtn: { alignItems: 'center', paddingVertical: Spacing.sm },
-  restoreText: { ...Typography.body, color: Colors.textSecondary },
-  legal: {
-    ...Typography.caption,
-    color: Colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginTop: Spacing.md,
-  },
-});
+function CloseButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{
+        alignSelf: 'flex-end',
+        marginTop: SPACING.sm,
+        width: 36,
+        height: 36,
+        borderRadius: RADIUS.full,
+        backgroundColor: COLORS.surfaceAlt,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <XIcon color={COLORS.textSecondary} size={18} />
+    </TouchableOpacity>
+  );
+}
