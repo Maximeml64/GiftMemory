@@ -4,12 +4,12 @@
 // stats, derniers cadeaux. Navigation rapide vers les autres tabs.
 
 import React, { useMemo } from 'react';
-import { Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Gift as GiftLucide, Cake, Users } from 'lucide-react-native';
+import { Gift as GiftLucide, Cake, Plus, Users } from 'lucide-react-native';
 
 import { RootStackParamList, TabParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
@@ -37,6 +37,7 @@ type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
 const GiftIcon = GiftLucide as unknown as LucideIcon;
 const CakeIcon = Cake as unknown as LucideIcon;
 const UsersIcon = Users as unknown as LucideIcon;
+const PlusIcon = Plus as unknown as LucideIcon;
 
 const SCREEN_PADDING = SPACING.lg;
 const MINI_CARD_GAP = SPACING.sm;
@@ -144,16 +145,73 @@ export default function HomeScreen() {
   const greeting = getGreeting();
   const isEmpty = !giftsLoading && !eventsLoading && gifts.length === 0 && events.length === 0;
 
+  function openCreateMenu() {
+    Alert.alert('Ajouter', 'Que souhaitez-vous noter ?', [
+      {
+        text: 'Un cadeau',
+        onPress: () => {
+          if (checkGiftLimit()) navigation.navigate('AddGift', { initialStatus: 'done' });
+        },
+      },
+      {
+        text: 'Une idée',
+        onPress: () => {
+          if (checkGiftLimit()) navigation.navigate('AddGift', { initialStatus: 'idea' });
+        },
+      },
+      {
+        text: 'Un événement',
+        onPress: () => {
+          if (checkEventLimit()) navigation.navigate('AddEvent', undefined);
+        },
+      },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
+  }
+
+  function CreateButton() {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={openCreateMenu}
+        accessibilityRole="button"
+        accessibilityLabel="Ajouter un cadeau, une idée ou un événement"
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: COLORS.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...SHADOWS.sm,
+        }}
+      >
+        <PlusIcon color={COLORS.textInverse} size={22} />
+      </TouchableOpacity>
+    );
+  }
+
   if (isEmpty) {
     return (
       <ScreenWrapper>
-        <View style={{ paddingTop: SPACING.lg }}>
-          <StyledText variant="display" style={{ marginBottom: 2 }}>
-            {greeting}
-          </StyledText>
-          <StyledText variant="body" color={COLORS.textSecondary}>
-            Votre boîte à souvenirs
-          </StyledText>
+        <View
+          style={{
+            paddingTop: SPACING.lg,
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: SPACING.md,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <StyledText variant="display" style={{ marginBottom: 2 }}>
+              {greeting}
+            </StyledText>
+            <StyledText variant="body" color={COLORS.textSecondary}>
+              Votre boîte à souvenirs
+            </StyledText>
+          </View>
+          <CreateButton />
         </View>
         <EmptyState
           emoji="🎁"
@@ -188,14 +246,25 @@ export default function HomeScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting */}
-        <View style={{ marginBottom: SPACING.xl }}>
-          <StyledText variant="display" style={{ marginBottom: 2 }}>
-            {greeting}
-          </StyledText>
-          <StyledText variant="body" color={COLORS.textSecondary}>
-            Votre boîte à souvenirs
-          </StyledText>
+        {/* Greeting + quick add */}
+        <View
+          style={{
+            marginBottom: SPACING.xl,
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: SPACING.md,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <StyledText variant="display" style={{ marginBottom: 2 }}>
+              {greeting}
+            </StyledText>
+            <StyledText variant="body" color={COLORS.textSecondary}>
+              Votre boîte à souvenirs
+            </StyledText>
+          </View>
+          <CreateButton />
         </View>
 
         {/* Annual budget summary */}

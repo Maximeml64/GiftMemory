@@ -233,7 +233,9 @@ export default function AddGiftScreen() {
   const isEditing = !!giftId;
   const existing = giftId ? getGiftById(giftId) : undefined;
 
-  const [status, setStatus] = useState<GiftStatus>(existing?.status ?? 'done');
+  const [status, setStatus] = useState<GiftStatus>(
+    existing?.status ?? route.params?.initialStatus ?? 'done'
+  );
   const [category, setCategory] = useState<GiftCategory>(existing?.category ?? 'Cadeau');
   const [direction, setDirection] = useState<GiftDirection>(existing?.direction ?? 'received');
   const [name, setName] = useState(existing?.name ?? '');

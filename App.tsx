@@ -156,7 +156,11 @@ export default function App() {
                   name="AddGift"
                   component={AddGiftScreen}
                   options={({ route }) => ({
-                    title: route.params?.giftId ? 'Modifier' : 'Nouveau cadeau',
+                    title: route.params?.giftId
+                      ? 'Modifier'
+                      : route.params?.initialStatus === 'idea'
+                        ? 'Nouvelle idée'
+                        : 'Nouveau cadeau',
                     presentation: 'modal',
                     headerLeft: () => null,
                   })}

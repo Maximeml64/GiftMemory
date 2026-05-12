@@ -57,7 +57,7 @@ export interface CalendarEvent {
 
 export type RootStackParamList = {
   Main: undefined;
-  AddGift: { giftId?: string } | undefined;
+  AddGift: { giftId?: string; initialStatus?: GiftStatus } | undefined;
   GiftDetail: { giftId: string; backTitle?: string };
   GiverDetail: { giverName: string; backTitle?: string };
   AddEvent: { eventId?: string } | undefined;
