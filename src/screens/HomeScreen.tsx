@@ -53,11 +53,13 @@ function StatCard({
   icon,
   count,
   label,
+  detail,
   onPress,
 }: {
   icon: React.ReactNode;
   count: number;
   label: string;
+  detail?: string;
   onPress: () => void;
 }) {
   return (
@@ -78,6 +80,11 @@ function StatCard({
       <StyledText variant="caption" color={COLORS.textSecondary}>
         {label}
       </StyledText>
+      {detail ? (
+        <StyledText variant="caption" color={COLORS.textTertiary}>
+          {detail}
+        </StyledText>
+      ) : null}
     </TouchableOpacity>
   );
 }
@@ -94,6 +101,16 @@ export default function HomeScreen() {
     [gifts]
   );
   const giversCount = useMemo(() => getUniqueGivers().length, [getUniqueGivers]);
+
+  const receivedCount = useMemo(
+    () => gifts.filter((g) => (g.direction ?? 'received') === 'received').length,
+    [gifts]
+  );
+  const givenCount = gifts.length - receivedCount;
+  const giftsDetail =
+    gifts.length === 0
+      ? undefined
+      : `${receivedCount} reçu${receivedCount > 1 ? 's' : ''} · ${givenCount} offert${givenCount > 1 ? 's' : ''}`;
 
   const screenWidth = Dimensions.get('window').width;
   const miniCardWidth = Math.min(160, (screenWidth - SCREEN_PADDING * 2 - MINI_CARD_GAP) / 2.2);
@@ -161,6 +178,7 @@ export default function HomeScreen() {
             icon={<GiftIcon color={COLORS.primary} size={18} />}
             count={gifts.length}
             label={gifts.length > 1 ? 'cadeaux' : 'cadeau'}
+            detail={giftsDetail}
             onPress={() => navigation.navigate('Gifts')}
           />
           <StatCard

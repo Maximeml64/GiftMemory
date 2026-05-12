@@ -28,6 +28,7 @@ import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type SortKey = 'date' | 'name' | 'giver';
+type DirectionFilter = 'all' | 'received' | 'given';
 
 const SearchIcon = Search as unknown as React.ComponentType<{ color?: string; size?: number }>;
 const XIcon = X as unknown as React.ComponentType<{ color?: string; size?: number }>;
@@ -35,7 +36,13 @@ const XIcon = X as unknown as React.ComponentType<{ color?: string; size?: numbe
 const SORT_LABELS: Record<SortKey, string> = {
   date: 'Récent',
   name: 'Nom',
-  giver: 'Donneur',
+  giver: 'Personne',
+};
+
+const DIRECTION_LABELS: Record<DirectionFilter, string> = {
+  all: 'Tous',
+  received: 'Reçus',
+  given: 'Offerts',
 };
 
 const GRID_GAP = SPACING.md;
@@ -47,6 +54,7 @@ export default function HomeScreen() {
   const { checkGiftLimit } = usePremiumGate();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('date');
+  const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
 
   const screenWidth = Dimensions.get('window').width;
   const cardWidth = useMemo(
@@ -56,6 +64,9 @@ export default function HomeScreen() {
 
   const filtered = useMemo(() => {
     let result = [...gifts];
+    if (directionFilter !== 'all') {
+      result = result.filter((g) => (g.direction ?? 'received') === directionFilter);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -68,7 +79,13 @@ export default function HomeScreen() {
       return a.giver.localeCompare(b.giver, 'fr');
     });
     return result;
-  }, [gifts, search, sort]);
+  }, [gifts, search, sort, directionFilter]);
+
+  const receivedCount = useMemo(
+    () => gifts.filter((g) => (g.direction ?? 'received') === 'received').length,
+    [gifts]
+  );
+  const givenCount = gifts.length - receivedCount;
 
   if (loading) {
     return (
@@ -84,7 +101,10 @@ export default function HomeScreen() {
     if (checkGiftLimit()) navigation.navigate('AddGift', undefined);
   };
 
-  const countLabel = `${gifts.length} cadeau${gifts.length !== 1 ? 'x' : ''}`;
+  const countLabel =
+    gifts.length === 0
+      ? 'Aucun cadeau'
+      : `${gifts.length} cadeau${gifts.length > 1 ? 'x' : ''} · ${receivedCount} reçu${receivedCount > 1 ? 's' : ''} · ${givenCount} offert${givenCount > 1 ? 's' : ''}`;
 
   return (
     <ScreenWrapper padded={false}>
@@ -123,7 +143,7 @@ export default function HomeScreen() {
               color: COLORS.text,
               padding: 0,
             }}
-            placeholder="Chercher un cadeau ou un donneur…"
+            placeholder="Chercher un cadeau ou une personne…"
             placeholderTextColor={COLORS.textTertiary}
             value={search}
             onChangeText={setSearch}
@@ -139,8 +159,20 @@ export default function HomeScreen() {
           ) : null}
         </View>
 
-        {/* Sort chips */}
+        {/* Direction filter */}
         <View style={{ flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md }}>
+          {(['all', 'received', 'given'] as DirectionFilter[]).map((key) => (
+            <Chip
+              key={key}
+              label={DIRECTION_LABELS[key]}
+              selected={directionFilter === key}
+              onPress={() => setDirectionFilter(key)}
+            />
+          ))}
+        </View>
+
+        {/* Sort chips */}
+        <View style={{ flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.sm }}>
           {(['date', 'name', 'giver'] as SortKey[]).map((key) => (
             <Chip
               key={key}

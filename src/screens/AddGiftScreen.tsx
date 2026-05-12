@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Crypto from 'expo-crypto';
 import { Camera, Image as ImageIcon, Pencil, Trash2 } from 'lucide-react-native';
 
-import { RootStackParamList, Gift, Occasion, GiftCategory } from '../types';
+import { RootStackParamList, Gift, GiftDirection, Occasion, GiftCategory } from '../types';
 import { useGifts } from '../store/GiftsContext';
 import { saveImageLocally, deleteImageLocally } from '../utils/storage';
 import OccasionPicker from '../components/OccasionPicker';
@@ -66,6 +66,7 @@ export default function AddGiftScreen() {
   const existing = giftId ? getGiftById(giftId) : undefined;
 
   const [category, setCategory] = useState<GiftCategory>(existing?.category ?? 'Cadeau');
+  const [direction, setDirection] = useState<GiftDirection>(existing?.direction ?? 'received');
   const [name, setName] = useState(existing?.name ?? '');
   const [giver, setGiver] = useState(existing?.giver ?? '');
   const [occasion, setOccasion] = useState<Occasion>(existing?.occasion ?? 'Anniversaire');
@@ -131,7 +132,12 @@ export default function AddGiftScreen() {
       return;
     }
     if (!giver.trim()) {
-      Alert.alert('Champ requis', 'Entrez le nom du donneur.');
+      Alert.alert(
+        'Champ requis',
+        direction === 'received'
+          ? 'Entrez le nom de la personne qui vous a offert ce cadeau.'
+          : 'Entrez le nom de la personne à qui vous l\'avez offert.'
+      );
       return;
     }
     setSaving(true);
@@ -151,6 +157,7 @@ export default function AddGiftScreen() {
         id,
         name: name.trim(),
         giver: giver.trim(),
+        direction,
         occasion,
         date,
         imageUri: finalImageUri,
@@ -187,6 +194,48 @@ export default function AddGiftScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Direction toggle (Reçu / Offert) */}
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: COLORS.surfaceAlt,
+              borderRadius: RADIUS.full,
+              padding: 4,
+              marginBottom: SPACING.lg,
+            }}
+          >
+            {(
+              [
+                { key: 'received', label: 'Reçu' },
+                { key: 'given', label: 'Offert' },
+              ] as { key: GiftDirection; label: string }[]
+            ).map(({ key, label }) => {
+              const active = direction === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  activeOpacity={0.85}
+                  onPress={() => setDirection(key)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: SPACING.sm + 2,
+                    borderRadius: RADIUS.full,
+                    backgroundColor: active ? COLORS.surface : 'transparent',
+                    alignItems: 'center',
+                    ...(active ? SHADOWS.sm : {}),
+                  }}
+                >
+                  <StyledText
+                    variant="bodyMedium"
+                    color={active ? COLORS.primary : COLORS.textSecondary}
+                  >
+                    {label}
+                  </StyledText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           {/* Category toggle */}
           <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.xl }}>
             {(['Cadeau', 'Vin & Spiritueux'] as GiftCategory[]).map((cat) => {
@@ -335,12 +384,12 @@ export default function AddGiftScreen() {
             ) : null}
 
             <View>
-              <FieldLabel>Donneur</FieldLabel>
+              <FieldLabel>{direction === 'received' ? 'Offert par' : 'Offert à'}</FieldLabel>
               <TextInput
                 style={fieldInputStyle}
                 value={giver}
                 onChangeText={setGiver}
-                placeholder="Ex: Mamie Suzanne"
+                placeholder={direction === 'received' ? 'Ex: Mamie Suzanne' : 'Ex: Jules, mon frère'}
                 placeholderTextColor={COLORS.textTertiary}
                 returnKeyType="done"
                 maxLength={50}

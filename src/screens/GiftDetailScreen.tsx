@@ -5,10 +5,12 @@ import { Alert, Image, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react-native';
 
 import { RootStackParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
 import {
+  Badge,
   Button,
   Card,
   InfoRow,
@@ -17,6 +19,10 @@ import {
 } from '../components/ui';
 import { COLORS, OCCASIONS, SPACING } from '../utils/theme';
 import { formatDate } from '../utils/dateUtils';
+
+type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const InIcon = ArrowDownLeft as unknown as LucideIcon;
+const OutIcon = ArrowUpRight as unknown as LucideIcon;
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'GiftDetail'>;
@@ -41,6 +47,7 @@ export default function GiftDetailScreen() {
 
   const occasion = OCCASIONS[gift.occasion] ?? OCCASIONS.Autre;
   const isWine = gift.category === 'Vin & Spiritueux';
+  const isGiven = gift.direction === 'given';
 
   function confirmDelete() {
     Alert.alert('Supprimer', `Supprimer "${gift!.name}" définitivement ?`, [
@@ -78,7 +85,17 @@ export default function GiftDetailScreen() {
 
         <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg }}>
           {/* Badges */}
-          <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.md }}>
+            <Badge
+              label={isGiven ? 'Offert' : 'Reçu'}
+              color={COLORS.primary}
+              bg={COLORS.primaryMuted}
+              icon={
+                isGiven
+                  ? <OutIcon color={COLORS.primary} size={13} />
+                  : <InIcon color={COLORS.primary} size={13} />
+              }
+            />
             <OccasionBadge occasion={gift.occasion} />
             {isWine ? (
               <View
@@ -107,7 +124,7 @@ export default function GiftDetailScreen() {
           {/* Meta card */}
           <Card padding="none" style={{ overflow: 'hidden', marginBottom: SPACING.xl }}>
             <View style={{ paddingHorizontal: SPACING.base }}>
-              <InfoRow label="Offert par" value={gift.giver} />
+              <InfoRow label={isGiven ? 'Offert à' : 'Offert par'} value={gift.giver} />
               <InfoRow label="Date" value={formatDate(gift.date)} divider={isWine} />
               {isWine && gift.appellation ? (
                 <InfoRow label="Appellation" value={gift.appellation} divider={!!gift.vintage || gift.quantity !== undefined} />

@@ -36,7 +36,10 @@ export async function deleteImageLocally(imageUri: string): Promise<void> {
 export async function loadGifts(): Promise<Gift[]> {
   try {
     const raw = await AsyncStorage.getItem(GIFTS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Gift[];
+    // Pre-direction Gifts default to 'received' so existing data behaves as before.
+    return parsed.map((g) => ({ ...g, direction: g.direction ?? 'received' }));
   } catch (e) {
     console.error('loadGifts error:', e);
     return [];
