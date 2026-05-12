@@ -38,8 +38,13 @@ export async function loadGifts(): Promise<Gift[]> {
     const raw = await AsyncStorage.getItem(GIFTS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Gift[];
-    // Pre-direction Gifts default to 'received' so existing data behaves as before.
-    return parsed.map((g) => ({ ...g, direction: g.direction ?? 'received' }));
+    // Pre-direction Gifts default to 'received', pre-status Gifts to 'done'
+    // so existing data behaves as before the new features.
+    return parsed.map((g) => ({
+      ...g,
+      direction: g.direction ?? 'received',
+      status: g.status ?? 'done',
+    }));
   } catch (e) {
     console.error('loadGifts error:', e);
     return [];
@@ -88,7 +93,20 @@ export async function deleteGift(giftId: string): Promise<Gift[]> {
   if (gift?.imageUri) {
     await deleteImageLocally(gift.imageUri);
   }
+  if (gift?.additionalPhotos?.length) {
+    await Promise.all(gift.additionalPhotos.map((uri) => deleteImageLocally(uri)));
+  }
   const updated = gifts.filter((g) => g.id !== giftId);
   await saveGifts(updated);
   return updated;
+}
+
+// Helper for saving an additional photo with a per-photo id suffix.
+export async function saveAdditionalPhoto(sourceUri: string, giftId: string): Promise<string> {
+  await ensureImagesDir();
+  const extension = sourceUri.split('.').pop()?.split('?')[0] || 'jpg';
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const destUri = `${IMAGES_DIR}${giftId}_${suffix}.${extension}`;
+  await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+  return destUri;
 }
