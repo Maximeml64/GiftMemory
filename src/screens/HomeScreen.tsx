@@ -112,6 +112,32 @@ export default function HomeScreen() {
       ? undefined
       : `${receivedCount} reçu${receivedCount > 1 ? 's' : ''} · ${givenCount} offert${givenCount > 1 ? 's' : ''}`;
 
+  // Annual budget stats (only count 'done' gifts with a price set this year)
+  const yearStats = useMemo(() => {
+    const year = new Date().getFullYear();
+    let givenSum = 0;
+    let givenWithPrice = 0;
+    let receivedSum = 0;
+    let receivedWithPrice = 0;
+    for (const g of gifts) {
+      if ((g.status ?? 'done') !== 'done') continue;
+      if (g.price === undefined) continue;
+      if (!g.date || !g.date.startsWith(`${year}-`)) continue;
+      if (g.direction === 'given') {
+        givenSum += g.price;
+        givenWithPrice += 1;
+      } else {
+        receivedSum += g.price;
+        receivedWithPrice += 1;
+      }
+    }
+    return { year, givenSum, givenWithPrice, receivedSum, receivedWithPrice };
+  }, [gifts]);
+
+  const hasBudgetData = yearStats.givenWithPrice > 0 || yearStats.receivedWithPrice > 0;
+  const formatEuro = (n: number) =>
+    n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
+
   const screenWidth = Dimensions.get('window').width;
   const miniCardWidth = Math.min(160, (screenWidth - SCREEN_PADDING * 2 - MINI_CARD_GAP) / 2.2);
 
@@ -171,6 +197,45 @@ export default function HomeScreen() {
             Votre boîte à souvenirs
           </StyledText>
         </View>
+
+        {/* Annual budget summary */}
+        {hasBudgetData ? (
+          <View
+            style={{
+              backgroundColor: COLORS.surface,
+              borderRadius: RADIUS.lg,
+              padding: SPACING.md,
+              marginBottom: SPACING.md,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              gap: SPACING.xs,
+            }}
+          >
+            <StyledText variant="eyebrow">Cette année {yearStats.year}</StyledText>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.lg, marginTop: 4 }}>
+              {yearStats.givenWithPrice > 0 ? (
+                <View>
+                  <StyledText variant="numericMedium">
+                    {formatEuro(yearStats.givenSum)}
+                  </StyledText>
+                  <StyledText variant="caption" color={COLORS.textSecondary}>
+                    offerts ({yearStats.givenWithPrice})
+                  </StyledText>
+                </View>
+              ) : null}
+              {yearStats.receivedWithPrice > 0 ? (
+                <View>
+                  <StyledText variant="numericMedium">
+                    {formatEuro(yearStats.receivedSum)}
+                  </StyledText>
+                  <StyledText variant="caption" color={COLORS.textSecondary}>
+                    reçus ({yearStats.receivedWithPrice})
+                  </StyledText>
+                </View>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
 
         {/* Stats trio */}
         <View style={{ flexDirection: 'row', gap: MINI_CARD_GAP }}>
