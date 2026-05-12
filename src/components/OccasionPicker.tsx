@@ -1,19 +1,17 @@
 // src/components/OccasionPicker.tsx
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { FlatList, Modal, Pressable, TouchableOpacity, View } from 'react-native';
+import { ChevronRight, Check } from 'lucide-react-native';
 import { Occasion } from '../types';
-import { Colors, Radius, Shadow, Spacing, Typography, Occasions } from '../utils/theme';
+import { COLORS, OCCASIONS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
+import { StyledText } from './ui/StyledText';
 
-const OCCASIONS: Occasion[] = ['Anniversaire', 'Noël', 'Naissance', 'Mariage', 'Autre'];
+const ORDER: Occasion[] = ['Anniversaire', 'Noël', 'Naissance', 'Mariage', 'Autre'];
+
+type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const ChevronIcon = ChevronRight as unknown as LucideIcon;
+const CheckIcon = Check as unknown as LucideIcon;
 
 interface Props {
   value: Occasion;
@@ -22,55 +20,97 @@ interface Props {
 
 export default function OccasionPicker({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
-  const current = Occasions[value];
+  const current = OCCASIONS[value];
 
   return (
     <>
       <TouchableOpacity
-        style={styles.trigger}
-        onPress={() => setOpen(true)}
         activeOpacity={0.75}
+        onPress={() => setOpen(true)}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: COLORS.surface,
+          borderRadius: RADIUS.md,
+          paddingHorizontal: SPACING.md,
+          paddingVertical: 14,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          gap: SPACING.sm,
+        }}
       >
-        <Text style={styles.triggerEmoji}>{current.emoji}</Text>
-        <Text style={styles.triggerLabel}>{current.label}</Text>
-        <Text style={styles.chevron}>›</Text>
+        <StyledText style={{ fontSize: 18 }}>{current.emoji}</StyledText>
+        <StyledText variant="body" style={{ flex: 1 }}>
+          {current.label}
+        </StyledText>
+        <ChevronIcon color={COLORS.textTertiary} size={18} />
       </TouchableOpacity>
 
-      <Modal
-        visible={open}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOpen(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>Occasion</Text>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable
+          onPress={() => setOpen(false)}
+          style={{ flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' }}
+        >
+          <View
+            style={{
+              backgroundColor: COLORS.surface,
+              borderTopLeftRadius: RADIUS.xxl,
+              borderTopRightRadius: RADIUS.xxl,
+              paddingTop: SPACING.lg,
+              paddingBottom: 40,
+              ...SHADOWS.xl,
+            }}
+          >
+            <StyledText
+              variant="h3"
+              align="center"
+              style={{ marginBottom: SPACING.md, paddingHorizontal: SPACING.lg }}
+            >
+              Occasion
+            </StyledText>
             <FlatList
-              data={OCCASIONS}
+              data={ORDER}
               keyExtractor={(item) => item}
               scrollEnabled={false}
               renderItem={({ item }) => {
-                const occ = Occasions[item];
+                const occ = OCCASIONS[item];
                 const selected = item === value;
                 return (
                   <TouchableOpacity
-                    style={[styles.option, selected && styles.optionSelected]}
+                    activeOpacity={0.7}
                     onPress={() => {
                       onChange(item);
                       setOpen(false);
                     }}
-                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: SPACING.md,
+                      paddingHorizontal: SPACING.lg,
+                      backgroundColor: selected ? COLORS.primaryMuted : 'transparent',
+                      gap: SPACING.md,
+                    }}
                   >
-                    <Text style={styles.optionEmoji}>{occ.emoji}</Text>
-                    <Text
-                      style={[
-                        styles.optionLabel,
-                        selected && styles.optionLabelSelected,
-                      ]}
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: RADIUS.full,
+                        backgroundColor: occ.bg,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <StyledText style={{ fontSize: 18 }}>{occ.emoji}</StyledText>
+                    </View>
+                    <StyledText
+                      variant={selected ? 'bodyMedium' : 'body'}
+                      color={selected ? COLORS.primary : COLORS.text}
+                      style={{ flex: 1 }}
                     >
                       {occ.label}
-                    </Text>
-                    {selected && <Text style={styles.check}>✓</Text>}
+                    </StyledText>
+                    {selected ? <CheckIcon color={COLORS.primary} size={20} /> : null}
                   </TouchableOpacity>
                 );
               }}
@@ -81,77 +121,3 @@ export default function OccasionPicker({ value, onChange }: Props) {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  triggerEmoji: {
-    fontSize: 18,
-    marginRight: 10,
-  },
-  triggerLabel: {
-    flex: 1,
-    ...Typography.body,
-    color: Colors.text,
-  },
-  chevron: {
-    fontSize: 20,
-    color: Colors.textTertiary,
-    fontWeight: '300',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: 40,
-    ...Shadow.lg,
-  },
-  sheetTitle: {
-    ...Typography.titleMedium,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.lg,
-  },
-  optionSelected: {
-    backgroundColor: Colors.primary + '10',
-  },
-  optionEmoji: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  optionLabel: {
-    flex: 1,
-    ...Typography.body,
-    color: Colors.text,
-  },
-  optionLabelSelected: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  check: {
-    fontSize: 16,
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-});

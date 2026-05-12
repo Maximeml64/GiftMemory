@@ -1,29 +1,28 @@
 // src/components/DatePickerField.tsx
-// Uses basic JS date pickers — no extra native deps required
+// Modal date picker, no extra native deps.
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  StyleSheet,
-  Pressable,
-  Platform,
-} from 'react-native';
-import { Colors, Radius, Shadow, Spacing, Typography } from '../utils/theme';
+import { Modal, Pressable, TouchableOpacity, View } from 'react-native';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 import { formatDate, toISODateString } from '../utils/dateUtils';
+import { Button } from './ui/Button';
+import { StyledText } from './ui/StyledText';
 
 interface Props {
   value: string; // ISO date string YYYY-MM-DD
   onChange: (value: string) => void;
 }
 
-// Simple month/year/day picker — no external dep
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
+
+type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const CalendarIcon = Calendar as unknown as LucideIcon;
+const ChevronLeftIcon = ChevronLeft as unknown as LucideIcon;
+const ChevronRightIcon = ChevronRight as unknown as LucideIcon;
 
 export default function DatePickerField({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
@@ -63,7 +62,7 @@ export default function DatePickerField({ value, onChange }: Props) {
   return (
     <>
       <TouchableOpacity
-        style={styles.trigger}
+        activeOpacity={0.75}
         onPress={() => {
           const d = new Date(value + 'T12:00:00');
           setYear(d.getFullYear());
@@ -71,151 +70,132 @@ export default function DatePickerField({ value, onChange }: Props) {
           setDay(d.getDate());
           setOpen(true);
         }}
-        activeOpacity={0.75}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: COLORS.surface,
+          borderRadius: RADIUS.md,
+          paddingHorizontal: SPACING.md,
+          paddingVertical: 14,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          gap: SPACING.sm,
+        }}
       >
-        <Text style={styles.triggerEmoji}>📅</Text>
-        <Text style={styles.triggerLabel}>{formatDate(value)}</Text>
-        <Text style={styles.chevron}>›</Text>
+        <CalendarIcon color={COLORS.textSecondary} size={18} />
+        <StyledText variant="body" style={{ flex: 1 }}>
+          {formatDate(value)}
+        </StyledText>
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Choisir une date</Text>
+        <Pressable
+          onPress={() => setOpen(false)}
+          style={{ flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: COLORS.surface,
+              borderTopLeftRadius: RADIUS.xxl,
+              borderTopRightRadius: RADIUS.xxl,
+              padding: SPACING.lg,
+              paddingBottom: 40,
+              ...SHADOWS.xl,
+            }}
+          >
+            <StyledText variant="h3" align="center" style={{ marginBottom: SPACING.md }}>
+              Choisir une date
+            </StyledText>
 
             {/* Month navigation */}
-            <View style={styles.monthRow}>
-              <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.navBtn}>
-                <Text style={styles.navBtnText}>‹</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: SPACING.md,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => changeMonth(-1)}
+                style={{ padding: SPACING.sm }}
+                hitSlop={8}
+              >
+                <ChevronLeftIcon color={COLORS.primary} size={24} />
               </TouchableOpacity>
-              <Text style={styles.monthLabel}>{MONTHS[month]} {year}</Text>
+              <StyledText variant="title">
+                {MONTHS[month]} {year}
+              </StyledText>
               <TouchableOpacity
                 onPress={() => changeMonth(1)}
-                style={styles.navBtn}
                 disabled={year === new Date().getFullYear() && month >= new Date().getMonth()}
+                style={{
+                  padding: SPACING.sm,
+                  opacity:
+                    year === new Date().getFullYear() && month >= new Date().getMonth() ? 0.3 : 1,
+                }}
+                hitSlop={8}
               >
-                <Text style={styles.navBtnText}>›</Text>
+                <ChevronRightIcon color={COLORS.primary} size={24} />
               </TouchableOpacity>
             </View>
 
             {/* Day grid */}
-            <View style={styles.dayGrid}>
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                marginBottom: SPACING.lg,
+              }}
+            >
               {days.map((d) => {
                 const isToday =
                   d === new Date().getDate() &&
                   month === new Date().getMonth() &&
                   year === new Date().getFullYear();
                 const selected = d === day;
-                const future =
-                  new Date(year, month, d) > new Date();
+                const future = new Date(year, month, d) > new Date();
                 return (
                   <TouchableOpacity
                     key={d}
-                    style={[
-                      styles.dayBtn,
-                      selected && styles.dayBtnSelected,
-                      isToday && !selected && styles.dayBtnToday,
-                    ]}
                     disabled={future}
                     onPress={() => setDay(d)}
                     activeOpacity={0.7}
+                    style={{
+                      width: '13%',
+                      aspectRatio: 1,
+                      margin: '0.4%',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: RADIUS.full,
+                      backgroundColor: selected ? COLORS.primary : 'transparent',
+                      borderWidth: isToday && !selected ? 1.5 : 0,
+                      borderColor: COLORS.primary,
+                    }}
                   >
-                    <Text
-                      style={[
-                        styles.dayText,
-                        selected && styles.dayTextSelected,
-                        future && styles.dayTextDisabled,
-                      ]}
+                    <StyledText
+                      variant="body"
+                      color={
+                        selected
+                          ? COLORS.textInverse
+                          : future
+                            ? COLORS.textTertiary
+                            : COLORS.text
+                      }
+                      style={selected ? { fontFamily: 'Inter_600SemiBold' } : undefined}
                     >
                       {d}
-                    </Text>
+                    </StyledText>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {/* Confirm */}
-            <TouchableOpacity style={styles.confirmBtn} onPress={confirm}>
-              <Text style={styles.confirmText}>Confirmer</Text>
-            </TouchableOpacity>
+            <Button label="Confirmer" onPress={confirm} fullWidth />
           </Pressable>
         </Pressable>
       </Modal>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  triggerEmoji: { fontSize: 18, marginRight: 10 },
-  triggerLabel: { flex: 1, ...Typography.body, color: Colors.text },
-  chevron: { fontSize: 20, color: Colors.textTertiary, fontWeight: '300' },
-  overlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Spacing.lg,
-    paddingBottom: 40,
-    ...Shadow.lg,
-  },
-  sheetTitle: {
-    ...Typography.titleMedium,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
-  monthRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  navBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navBtnText: { fontSize: 24, color: Colors.primary, fontWeight: '600' },
-  monthLabel: { ...Typography.titleMedium, color: Colors.text },
-  dayGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    marginBottom: Spacing.lg,
-  },
-  dayBtn: {
-    width: '13%',
-    aspectRatio: 1,
-    margin: '0.4%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.full,
-  },
-  dayBtnSelected: { backgroundColor: Colors.primary },
-  dayBtnToday: { borderWidth: 1.5, borderColor: Colors.primary },
-  dayText: { ...Typography.body, color: Colors.text },
-  dayTextSelected: { color: '#FFF', fontWeight: '700' },
-  dayTextDisabled: { color: Colors.textTertiary },
-  confirmBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  confirmText: { ...Typography.bodyMedium, color: '#FFF', fontWeight: '700' },
-});
