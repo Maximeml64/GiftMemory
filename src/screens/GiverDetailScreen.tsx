@@ -54,13 +54,15 @@ export default function GiverDetailScreen() {
   const { giverName } = route.params;
   const gifts = getGiftsByGiver(giverName);
 
+  const ideas = useMemo(() => gifts.filter((g) => g.status === 'idea'), [gifts]);
+  const done = useMemo(() => gifts.filter((g) => (g.status ?? 'done') === 'done'), [gifts]);
   const received = useMemo(
-    () => gifts.filter((g) => (g.direction ?? 'received') === 'received'),
-    [gifts]
+    () => done.filter((g) => (g.direction ?? 'received') === 'received'),
+    [done]
   );
   const given = useMemo(
-    () => gifts.filter((g) => g.direction === 'given'),
-    [gifts]
+    () => done.filter((g) => g.direction === 'given'),
+    [done]
   );
 
   const screenWidth = Dimensions.get('window').width;
@@ -69,14 +71,17 @@ export default function GiverDetailScreen() {
     [screenWidth]
   );
 
-  const summaryLabel =
-    gifts.length === 0
-      ? 'Aucun cadeau'
-      : received.length > 0 && given.length > 0
-        ? `${received.length} reçu${received.length > 1 ? 's' : ''} · ${given.length} offert${given.length > 1 ? 's' : ''}`
-        : received.length > 0
-          ? `${received.length} cadeau${received.length > 1 ? 'x' : ''} reçu${received.length > 1 ? 's' : ''}`
-          : `${given.length} cadeau${given.length > 1 ? 'x' : ''} offert${given.length > 1 ? 's' : ''}`;
+  const summaryParts: string[] = [];
+  if (received.length > 0) {
+    summaryParts.push(`${received.length} reçu${received.length > 1 ? 's' : ''}`);
+  }
+  if (given.length > 0) {
+    summaryParts.push(`${given.length} offert${given.length > 1 ? 's' : ''}`);
+  }
+  if (ideas.length > 0) {
+    summaryParts.push(`${ideas.length} idée${ideas.length > 1 ? 's' : ''}`);
+  }
+  const summaryLabel = summaryParts.length === 0 ? 'Aucun cadeau' : summaryParts.join(' · ');
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
@@ -112,6 +117,20 @@ export default function GiverDetailScreen() {
           />
         ) : (
           <View style={{ paddingHorizontal: SCREEN_PADDING }}>
+            {ideas.length > 0 ? (
+              <>
+                <SectionHeader
+                  eyebrow="Idées"
+                  title={`Idées pour ${giverName}`}
+                />
+                <GiftsGrid
+                  gifts={ideas}
+                  cardWidth={cardWidth}
+                  onPress={(g) => navigation.navigate('GiftDetail', { giftId: g.id })}
+                />
+              </>
+            ) : null}
+
             {received.length > 0 ? (
               <>
                 <SectionHeader

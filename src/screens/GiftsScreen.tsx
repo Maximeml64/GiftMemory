@@ -29,6 +29,7 @@ import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type SortKey = 'date' | 'name' | 'giver';
 type DirectionFilter = 'all' | 'received' | 'given';
+type StatusView = 'done' | 'idea';
 
 const SearchIcon = Search as unknown as React.ComponentType<{ color?: string; size?: number }>;
 const XIcon = X as unknown as React.ComponentType<{ color?: string; size?: number }>;
@@ -55,6 +56,7 @@ export default function HomeScreen() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('date');
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
+  const [statusView, setStatusView] = useState<StatusView>('done');
 
   const screenWidth = Dimensions.get('window').width;
   const cardWidth = useMemo(
@@ -63,14 +65,17 @@ export default function HomeScreen() {
   );
 
   const filtered = useMemo(() => {
-    let result = [...gifts];
+    let result = gifts.filter((g) => (g.status ?? 'done') === statusView);
     if (directionFilter !== 'all') {
       result = result.filter((g) => (g.direction ?? 'received') === directionFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
-        (g) => g.name.toLowerCase().includes(q) || g.giver.toLowerCase().includes(q)
+        (g) =>
+          g.name.toLowerCase().includes(q) ||
+          g.giver.toLowerCase().includes(q) ||
+          (g.tags ?? []).some((t) => t.toLowerCase().includes(q))
       );
     }
     result.sort((a, b) => {
@@ -79,13 +84,15 @@ export default function HomeScreen() {
       return a.giver.localeCompare(b.giver, 'fr');
     });
     return result;
-  }, [gifts, search, sort, directionFilter]);
+  }, [gifts, search, sort, directionFilter, statusView]);
 
+  const doneGifts = useMemo(() => gifts.filter((g) => (g.status ?? 'done') === 'done'), [gifts]);
+  const ideaGifts = useMemo(() => gifts.filter((g) => g.status === 'idea'), [gifts]);
   const receivedCount = useMemo(
-    () => gifts.filter((g) => (g.direction ?? 'received') === 'received').length,
-    [gifts]
+    () => doneGifts.filter((g) => (g.direction ?? 'received') === 'received').length,
+    [doneGifts]
   );
-  const givenCount = gifts.length - receivedCount;
+  const givenCount = doneGifts.length - receivedCount;
 
   if (loading) {
     return (
@@ -101,21 +108,78 @@ export default function HomeScreen() {
     if (checkGiftLimit()) navigation.navigate('AddGift', undefined);
   };
 
+  const headerTitle = statusView === 'idea' ? 'Mes idées' : 'Mes cadeaux';
   const countLabel =
-    gifts.length === 0
-      ? 'Aucun cadeau'
-      : `${gifts.length} cadeau${gifts.length > 1 ? 'x' : ''} · ${receivedCount} reçu${receivedCount > 1 ? 's' : ''} · ${givenCount} offert${givenCount > 1 ? 's' : ''}`;
+    statusView === 'idea'
+      ? ideaGifts.length === 0
+        ? 'Aucune idée notée'
+        : `${ideaGifts.length} idée${ideaGifts.length > 1 ? 's' : ''} en réserve`
+      : doneGifts.length === 0
+        ? 'Aucun cadeau'
+        : `${doneGifts.length} cadeau${doneGifts.length > 1 ? 'x' : ''} · ${receivedCount} reçu${receivedCount > 1 ? 's' : ''} · ${givenCount} offert${givenCount > 1 ? 's' : ''}`;
 
   return (
     <ScreenWrapper padded={false}>
       <View style={{ paddingHorizontal: SCREEN_PADDING, paddingTop: SPACING.sm }}>
         {/* Header éditorial */}
         <StyledText variant="display" style={{ marginBottom: 2 }}>
-          Mes cadeaux
+          {headerTitle}
         </StyledText>
         <StyledText variant="small" color={COLORS.textSecondary}>
           {countLabel}
         </StyledText>
+
+        {/* Status view: Effectifs / Idées */}
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: COLORS.surfaceAlt,
+            borderRadius: RADIUS.full,
+            padding: 4,
+            marginTop: SPACING.md,
+          }}
+        >
+          {(
+            [
+              { key: 'done', label: 'Effectifs' },
+              { key: 'idea', label: 'Idées' },
+            ] as { key: StatusView; label: string }[]
+          ).map(({ key, label }) => {
+            const active = statusView === key;
+            const count = key === 'idea' ? ideaGifts.length : doneGifts.length;
+            return (
+              <TouchableOpacity
+                key={key}
+                activeOpacity={0.85}
+                onPress={() => setStatusView(key)}
+                style={{
+                  flex: 1,
+                  paddingVertical: SPACING.sm + 2,
+                  borderRadius: RADIUS.full,
+                  backgroundColor: active ? COLORS.surface : 'transparent',
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  gap: SPACING.xs,
+                  ...(active ? SHADOWS.sm : {}),
+                }}
+              >
+                <StyledText
+                  variant="bodyMedium"
+                  color={active ? COLORS.primary : COLORS.textSecondary}
+                >
+                  {label}
+                </StyledText>
+                <StyledText
+                  variant="caption"
+                  color={active ? COLORS.primary : COLORS.textTertiary}
+                >
+                  {count}
+                </StyledText>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {/* Search */}
         <View
@@ -187,14 +251,22 @@ export default function HomeScreen() {
       {/* Grid or empty */}
       {filtered.length === 0 ? (
         <EmptyState
-          emoji={search ? '🔎' : '🎁'}
-          title={search ? 'Aucun résultat' : 'Votre boîte est vide'}
+          emoji={search ? '🔎' : statusView === 'idea' ? '💡' : '🎁'}
+          title={
+            search
+              ? 'Aucun résultat'
+              : statusView === 'idea'
+                ? 'Aucune idée notée'
+                : 'Votre boîte est vide'
+          }
           description={
             search
               ? 'Essayez un autre terme de recherche.'
-              : 'Commencez à garder en mémoire les cadeaux que vous offrez et recevez.'
+              : statusView === 'idea'
+                ? 'Notez vos envies — les vôtres ou celles que vous voulez offrir.'
+                : 'Commencez à garder en mémoire les cadeaux que vous offrez et recevez.'
           }
-          ctaLabel={!search ? 'Ajouter un cadeau' : undefined}
+          ctaLabel={!search ? (statusView === 'idea' ? 'Ajouter une idée' : 'Ajouter un cadeau') : undefined}
           onCtaPress={!search ? goAdd : undefined}
         />
       ) : (

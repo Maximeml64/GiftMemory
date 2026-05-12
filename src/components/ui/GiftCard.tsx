@@ -1,8 +1,9 @@
 // src/components/ui/GiftCard.tsx
 //
 // Carte cadeau format portrait (grille 2-col). Photo héroïsée en haut
-// (aspect 4:5), nom serif au centre, donneur ou destinataire en
-// sous-titre (préfixé d'une icône directionnelle), badge occasion en bas.
+// (aspect 4:5), nom serif au centre, donneur/destinataire en sous-titre,
+// badge occasion en bas. Direction (received/given) et statut (idea/done)
+// sont indiqués par des badges discrets.
 
 import React from 'react';
 import { Image, TouchableOpacity, View, ViewStyle } from 'react-native';
@@ -25,6 +26,7 @@ interface Props {
 export function GiftCard({ gift, width, onPress }: Props) {
   const occasion = OCCASIONS[gift.occasion] ?? OCCASIONS.Autre;
   const isGiven = gift.direction === 'given';
+  const isIdea = gift.status === 'idea';
   const DirectionIcon = isGiven ? OutIcon : InIcon;
 
   const containerStyle: ViewStyle = {
@@ -33,6 +35,7 @@ export function GiftCard({ gift, width, onPress }: Props) {
     backgroundColor: COLORS.surface,
     overflow: 'hidden',
     ...SHADOWS.sm,
+    ...(isIdea ? { borderWidth: 1, borderColor: COLORS.borderStrong, borderStyle: 'dashed' } : {}),
   };
 
   const imageHeight = Math.round(width * 1.05); // 4:5 aspect ratio approx (105%)
@@ -43,7 +46,7 @@ export function GiftCard({ gift, width, onPress }: Props) {
         {gift.imageUri ? (
           <Image
             source={{ uri: gift.imageUri }}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', opacity: isIdea ? 0.82 : 1 }}
             resizeMode="cover"
           />
         ) : (
@@ -54,12 +57,37 @@ export function GiftCard({ gift, width, onPress }: Props) {
               backgroundColor: occasion.bg,
               alignItems: 'center',
               justifyContent: 'center',
+              opacity: isIdea ? 0.85 : 1,
             }}
           >
             <StyledText style={{ fontSize: 56, lineHeight: 64 }}>{occasion.emoji}</StyledText>
           </View>
         )}
-        {/* Direction badge in top-right corner */}
+
+        {/* Idea ribbon top-left */}
+        {isIdea ? (
+          <View
+            style={{
+              position: 'absolute',
+              top: SPACING.sm,
+              left: SPACING.sm,
+              paddingVertical: 2,
+              paddingHorizontal: SPACING.sm,
+              borderRadius: RADIUS.full,
+              backgroundColor: COLORS.primary,
+            }}
+          >
+            <StyledText
+              variant="caption"
+              color={COLORS.textInverse}
+              style={{ textTransform: 'uppercase', letterSpacing: 1.2 }}
+            >
+              Idée
+            </StyledText>
+          </View>
+        ) : null}
+
+        {/* Direction badge top-right */}
         <View
           style={{
             position: 'absolute',
@@ -95,8 +123,21 @@ export function GiftCard({ gift, width, onPress }: Props) {
             {gift.giver}
           </StyledText>
         </View>
-        <View style={{ marginTop: SPACING.xs }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: SPACING.xs,
+            marginTop: SPACING.xs,
+          }}
+        >
           <OccasionBadge occasion={gift.occasion} size="sm" />
+          {gift.price !== undefined ? (
+            <StyledText variant="smallMedium" color={COLORS.textSecondary}>
+              {gift.price.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €
+            </StyledText>
+          ) : null}
         </View>
       </View>
     </TouchableOpacity>
