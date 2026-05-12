@@ -2,23 +2,44 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, FlatList, StyleSheet, TextInput,
-  TouchableOpacity, ActivityIndicator,
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Search, X } from 'lucide-react-native';
 
 import { RootStackParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
 import { usePremiumGate } from '../hooks/usePremiumGate';
-import GiftCard from '../components/GiftCard';
-import FAB from '../components/FAB';
-import EmptyState from '../components/EmptyState';
-import { Colors, Spacing, Radius, Typography, Shadow } from '../utils/theme';
+import {
+  Chip,
+  EmptyState,
+  FAB,
+  GiftCard,
+  ScreenWrapper,
+  StyledText,
+} from '../components/ui';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type SortKey = 'date' | 'name' | 'giver';
+
+const SearchIcon = Search as unknown as React.ComponentType<{ color?: string; size?: number }>;
+const XIcon = X as unknown as React.ComponentType<{ color?: string; size?: number }>;
+
+const SORT_LABELS: Record<SortKey, string> = {
+  date: 'Récent',
+  name: 'Nom',
+  giver: 'Donneur',
+};
+
+const GRID_GAP = SPACING.md;
+const SCREEN_PADDING = SPACING.lg;
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
@@ -27,14 +48,18 @@ export default function HomeScreen() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('date');
 
+  const screenWidth = Dimensions.get('window').width;
+  const cardWidth = useMemo(
+    () => (screenWidth - SCREEN_PADDING * 2 - GRID_GAP) / 2,
+    [screenWidth]
+  );
+
   const filtered = useMemo(() => {
     let result = [...gifts];
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
-        (g) =>
-          g.name.toLowerCase().includes(q) ||
-          g.giver.toLowerCase().includes(q)
+        (g) => g.name.toLowerCase().includes(q) || g.giver.toLowerCase().includes(q)
       );
     }
     result.sort((a, b) => {
@@ -47,159 +72,124 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-      </View>
+      <ScreenWrapper padded={false}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+        </View>
+      </ScreenWrapper>
     );
   }
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Mes cadeaux</Text>
-          <Text style={styles.subtitle}>
-            {gifts.length} cadeau{gifts.length !== 1 ? 'x' : ''}
-          </Text>
-        </View>
-      </View>
+  const goAdd = () => {
+    if (checkGiftLimit()) navigation.navigate('AddGift', undefined);
+  };
 
-      {/* Search bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+  const countLabel = `${gifts.length} cadeau${gifts.length !== 1 ? 'x' : ''}`;
+
+  return (
+    <ScreenWrapper padded={false}>
+      <View style={{ paddingHorizontal: SCREEN_PADDING, paddingTop: SPACING.sm }}>
+        {/* Header éditorial */}
+        <StyledText variant="display" style={{ marginBottom: 2 }}>
+          Mes cadeaux
+        </StyledText>
+        <StyledText variant="small" color={COLORS.textSecondary}>
+          {countLabel}
+        </StyledText>
+
+        {/* Search */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: SPACING.sm,
+            marginTop: SPACING.lg,
+            backgroundColor: COLORS.surface,
+            borderRadius: RADIUS.lg,
+            paddingHorizontal: SPACING.md,
+            paddingVertical: SPACING.sm + 2,
+            borderWidth: 1,
+            borderColor: COLORS.border,
+            ...SHADOWS.sm,
+          }}
+        >
+          <SearchIcon color={COLORS.textTertiary} size={18} />
           <TextInput
-            style={styles.searchInput}
+            style={{
+              flex: 1,
+              fontFamily: 'Inter_400Regular',
+              fontSize: 15,
+              lineHeight: 22,
+              color: COLORS.text,
+              padding: 0,
+            }}
             placeholder="Chercher un cadeau ou un donneur…"
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={COLORS.textTertiary}
             value={search}
             onChangeText={setSearch}
             returnKeyType="search"
           />
-          {search.length > 0 && (
+          {search.length > 0 ? (
             <TouchableOpacity
               onPress={() => setSearch('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.clearIcon}>✕</Text>
+              <XIcon color={COLORS.textTertiary} size={16} />
             </TouchableOpacity>
-          )}
+          ) : null}
+        </View>
+
+        {/* Sort chips */}
+        <View style={{ flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md }}>
+          {(['date', 'name', 'giver'] as SortKey[]).map((key) => (
+            <Chip
+              key={key}
+              label={SORT_LABELS[key]}
+              selected={sort === key}
+              onPress={() => setSort(key)}
+            />
+          ))}
         </View>
       </View>
 
-      {/* Sort pills */}
-      <View style={styles.sortRow}>
-        {(['date', 'name', 'giver'] as SortKey[]).map((key) => {
-          const labels: Record<SortKey, string> = {
-            date: '📅 Date',
-            name: '🎁 Nom',
-            giver: '👤 Donneur',
-          };
-          return (
-            <TouchableOpacity
-              key={key}
-              style={[styles.pill, sort === key && styles.pillActive]}
-              onPress={() => setSort(key)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, sort === key && styles.pillTextActive]}>
-                {labels[key]}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Grid */}
+      {/* Grid or empty */}
       {filtered.length === 0 ? (
         <EmptyState
-          emoji="🎁"
-          title={search ? 'Aucun résultat' : 'Aucun cadeau enregistré'}
-          subtitle={
+          emoji={search ? '🔎' : '🎁'}
+          title={search ? 'Aucun résultat' : 'Votre boîte est vide'}
+          description={
             search
-              ? 'Essayez un autre terme de recherche'
-              : 'Appuyez sur + pour ajouter votre premier cadeau !'
+              ? 'Essayez un autre terme de recherche.'
+              : 'Commencez à garder en mémoire les cadeaux que vous offrez et recevez.'
           }
+          ctaLabel={!search ? 'Ajouter un cadeau' : undefined}
+          onCtaPress={!search ? goAdd : undefined}
         />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={{
+            paddingHorizontal: SCREEN_PADDING,
+            paddingTop: SPACING.lg,
+            paddingBottom: 120,
+          }}
+          columnWrapperStyle={{ gap: GRID_GAP, marginBottom: GRID_GAP }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <GiftCard
               gift={item}
-              onPress={() => navigation.navigate('GiftDetail', { giftId: item.id, backTitle: 'Cadeaux' })}
+              width={cardWidth}
+              onPress={() =>
+                navigation.navigate('GiftDetail', { giftId: item.id, backTitle: 'Cadeaux' })
+              }
             />
           )}
         />
       )}
 
-      <FAB onPress={() => { if (checkGiftLimit()) navigation.navigate('AddGift', undefined); }} />
-    </SafeAreaView>
+      <FAB onPress={goAdd} accessibilityLabel="Ajouter un cadeau" />
+    </ScreenWrapper>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  title: { ...Typography.displayMedium, color: Colors.text },
-  subtitle: { ...Typography.body, color: Colors.textSecondary, marginTop: 2 },
-  searchContainer: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-    ...Shadow.sm,
-  },
-  searchIcon: { fontSize: 16, marginRight: 8 },
-  searchInput: {
-    flex: 1,
-    ...Typography.body,
-    color: Colors.text,
-    padding: 0,
-  },
-  clearIcon: {
-    fontSize: 14,
-    color: Colors.textTertiary,
-    paddingLeft: 8,
-    fontWeight: '600',
-  },
-  sortRow: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    gap: 8,
-    marginBottom: Spacing.sm,
-  },
-  pill: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surface,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  pillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  pillText: { ...Typography.captionMedium, color: Colors.textSecondary },
-  pillTextActive: { color: '#FFF' },
-  grid: {
-    paddingHorizontal: Spacing.lg - 6,
-    paddingBottom: 100,
-  },
-});
