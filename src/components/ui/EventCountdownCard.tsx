@@ -15,6 +15,8 @@ interface Props {
   event: CalendarEvent;
   daysUntil: number; // 0 = aujourd'hui, négatif = passé
   onPress: () => void;
+  ideaCount?: number;
+  lastYearGiftName?: string;
 }
 
 const MONTH_LABELS = [
@@ -30,7 +32,7 @@ function eventTypeToOccasion(type: CalendarEvent['type']): Occasion {
   return 'Autre';
 }
 
-export function EventCountdownCard({ event, daysUntil, onPress }: Props) {
+export function EventCountdownCard({ event, daysUntil, onPress, ideaCount, lastYearGiftName }: Props) {
   const occasion = OCCASIONS[eventTypeToOccasion(event.type)] ?? OCCASIONS.Autre;
   const isToday = daysUntil === 0;
   const isPast = daysUntil < 0;
@@ -92,6 +94,29 @@ export function EventCountdownCard({ event, daysUntil, onPress }: Props) {
           </StyledText>
         </View>
       </View>
+
+      {ideaCount || lastYearGiftName ? (
+        <View
+          style={{
+            marginTop: SPACING.sm,
+            paddingTop: SPACING.sm,
+            borderTopWidth: 0.5,
+            borderTopColor: COLORS.border,
+            gap: 2,
+          }}
+        >
+          {ideaCount ? (
+            <StyledText variant="caption" color={COLORS.primary}>
+              💡 {ideaCount} idée{ideaCount > 1 ? 's' : ''} notée{ideaCount > 1 ? 's' : ''}
+            </StyledText>
+          ) : null}
+          {lastYearGiftName ? (
+            <StyledText variant="caption" color={COLORS.textTertiary} numberOfLines={1}>
+              L'an dernier : {lastYearGiftName}
+            </StyledText>
+          ) : null}
+        </View>
+      ) : null}
     </Card>
   );
 }

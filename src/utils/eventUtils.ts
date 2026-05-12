@@ -1,6 +1,49 @@
 // src/utils/eventUtils.ts
 
-import { CalendarEvent } from '../types';
+import { CalendarEvent, Gift } from '../types';
+
+// Person-name matching used for anti-repetition and wishlist lookups.
+function samePerson(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+// Returns the gift offered to this person closest to last year's occurrence
+// of the event, within a ±45-day window. Used to surface "last year's gift"
+// as anti-repetition hint.
+export function lastYearGiftForEvent(
+  event: CalendarEvent,
+  gifts: Gift[]
+): Gift | undefined {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const lastYear = new Date(today.getFullYear() - 1, event.month - 1, event.day);
+  const windowMs = 45 * 86_400_000;
+
+  const matches = gifts.filter((g) => {
+    if (g.direction !== 'given') return false;
+    if ((g.status ?? 'done') !== 'done') return false;
+    if (!samePerson(g.giver, event.personName)) return false;
+    if (!g.date) return false;
+    const t = new Date(g.date + 'T12:00:00').getTime();
+    return Math.abs(t - lastYear.getTime()) <= windowMs;
+  });
+
+  if (matches.length === 0) return undefined;
+  // Closest match to last year's exact day.
+  matches.sort((a, b) => {
+    const da = Math.abs(new Date(a.date + 'T12:00:00').getTime() - lastYear.getTime());
+    const db = Math.abs(new Date(b.date + 'T12:00:00').getTime() - lastYear.getTime());
+    return da - db;
+  });
+  return matches[0];
+}
+
+// Returns wishlist ideas tagged for this person.
+export function ideasForPerson(personName: string, gifts: Gift[]): Gift[] {
+  return gifts.filter(
+    (g) => g.status === 'idea' && samePerson(g.giver, personName)
+  );
+}
 
 export function daysUntilNext(month: number, day: number): number {
   const today = new Date();

@@ -26,7 +26,7 @@ import {
   StyledText,
 } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
-import { daysUntilNext, sortEventsByNext } from '../utils/eventUtils';
+import { daysUntilNext, ideasForPerson, lastYearGiftForEvent, sortEventsByNext } from '../utils/eventUtils';
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -208,16 +208,22 @@ export default function HomeScreen() {
               }
             />
             <View style={{ gap: SPACING.sm }}>
-              {upcomingEvents.map((event) => (
-                <EventCountdownCard
-                  key={event.id}
-                  event={event}
-                  daysUntil={daysUntilNext(event.month, event.day)}
-                  onPress={() =>
-                    navigation.navigate('EventDetail', { eventId: event.id, backTitle: 'Accueil' })
-                  }
-                />
-              ))}
+              {upcomingEvents.map((event) => {
+                const ideas = ideasForPerson(event.personName, gifts);
+                const lastYear = lastYearGiftForEvent(event, gifts);
+                return (
+                  <EventCountdownCard
+                    key={event.id}
+                    event={event}
+                    daysUntil={daysUntilNext(event.month, event.day)}
+                    ideaCount={ideas.length || undefined}
+                    lastYearGiftName={lastYear?.name}
+                    onPress={() =>
+                      navigation.navigate('EventDetail', { eventId: event.id, backTitle: 'Accueil' })
+                    }
+                  />
+                );
+              })}
             </View>
           </>
         ) : events.length === 0 ? (

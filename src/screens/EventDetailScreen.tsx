@@ -1,22 +1,31 @@
 // src/screens/EventDetailScreen.tsx
 
-import React from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Alert, Dimensions, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList, Occasion } from '../types';
 import { useEvents } from '../store/EventsContext';
+import { useGifts } from '../store/GiftsContext';
 import {
   Button,
   Card,
+  GiftCard,
   InfoRow,
   OccasionBadge,
+  SectionHeader,
   StyledText,
 } from '../components/ui';
 import { COLORS, FONTS, OCCASIONS, RADIUS, SPACING } from '../utils/theme';
-import { daysLabel, daysUntilNext, formatEventDate } from '../utils/eventUtils';
+import {
+  daysLabel,
+  daysUntilNext,
+  formatEventDate,
+  ideasForPerson,
+  lastYearGiftForEvent,
+} from '../utils/eventUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'EventDetail'>;
@@ -35,7 +44,20 @@ export default function EventDetailScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { getEventById, removeEvent } = useEvents();
+  const { gifts } = useGifts();
   const event = getEventById(route.params.eventId);
+
+  const ideas = useMemo(
+    () => (event ? ideasForPerson(event.personName, gifts) : []),
+    [event, gifts]
+  );
+  const lastYear = useMemo(
+    () => (event ? lastYearGiftForEvent(event, gifts) : undefined),
+    [event, gifts]
+  );
+
+  const screenWidth = Dimensions.get('window').width;
+  const miniCardWidth = Math.min(160, (screenWidth - SPACING.lg * 2 - SPACING.sm) / 2.2);
 
   if (!event) {
     return (
@@ -137,7 +159,7 @@ export default function EventDetailScreen() {
 
         <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg }}>
           {/* Meta card */}
-          <Card padding="none" style={{ overflow: 'hidden', marginBottom: SPACING.xl }}>
+          <Card padding="none" style={{ overflow: 'hidden', marginBottom: SPACING.lg }}>
             <View style={{ paddingHorizontal: SPACING.base }}>
               <InfoRow label="Date" value={formatEventDate(event.month, event.day)} />
               <InfoRow
@@ -151,6 +173,52 @@ export default function EventDetailScreen() {
               {event.notes ? <InfoRow label="Notes" value={event.notes} divider={false} /> : null}
             </View>
           </Card>
+
+          {/* Wishlist for this person */}
+          {ideas.length > 0 ? (
+            <View style={{ marginBottom: SPACING.lg }}>
+              <SectionHeader
+                eyebrow="À offrir"
+                title={`Idées pour ${event.personName}`}
+              />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: SPACING.sm, paddingRight: SPACING.lg }}
+                style={{ marginHorizontal: -SPACING.lg, paddingHorizontal: SPACING.lg }}
+              >
+                {ideas.map((g) => (
+                  <GiftCard
+                    key={g.id}
+                    gift={g}
+                    width={miniCardWidth}
+                    onPress={() =>
+                      navigation.navigate('GiftDetail', { giftId: g.id, backTitle: event.personName })
+                    }
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {/* Last year's gift — anti-repetition */}
+          {lastYear ? (
+            <View style={{ marginBottom: SPACING.lg }}>
+              <SectionHeader
+                eyebrow="Anti-répétition"
+                title="L'an dernier vous lui aviez offert"
+              />
+              <View style={{ alignItems: 'flex-start' }}>
+                <GiftCard
+                  gift={lastYear}
+                  width={miniCardWidth}
+                  onPress={() =>
+                    navigation.navigate('GiftDetail', { giftId: lastYear.id, backTitle: event.personName })
+                  }
+                />
+              </View>
+            </View>
+          ) : null}
 
           {/* Actions */}
           <View style={{ gap: SPACING.sm }}>
