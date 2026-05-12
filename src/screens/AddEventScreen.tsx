@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useHeaderHeight } from '@react-navigation/elements';
 import * as Crypto from 'expo-crypto';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react-native';
 
@@ -67,6 +68,7 @@ const SCREEN_PADDING = SPACING.lg;
 export default function AddEventScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const headerHeight = useHeaderHeight();
   const { saveEvent, getEventById } = useEvents();
 
   const eventId = route.params?.eventId;
@@ -116,16 +118,18 @@ export default function AddEventScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={headerHeight}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: SPACING.md,
-            paddingBottom: 40,
+            paddingBottom: 80,
           }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           {/* Type chips */}

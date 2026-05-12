@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useHeaderHeight } from '@react-navigation/elements';
 import * as ImagePicker from 'expo-image-picker';
 import * as Crypto from 'expo-crypto';
 import { Pencil, Plus, X } from 'lucide-react-native';
@@ -227,6 +228,7 @@ function TagsInput({ tags, onChange }: { tags: string[]; onChange: (t: string[])
 export default function AddGiftScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const headerHeight = useHeaderHeight();
   const { saveGift, getGiftById } = useGifts();
 
   const giftId = route.params?.giftId;
@@ -419,16 +421,18 @@ export default function AddGiftScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={headerHeight}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: SPACING.md,
-            paddingBottom: 40,
+            paddingBottom: 80,
           }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           {/* Status: Idée / Effectif */}
