@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Cake, Gift, Settings as SettingsIcon, Users } from 'lucide-react-native';
+import { Cake, Gift, Home as HomeLucide, Settings as SettingsIcon, Users } from 'lucide-react-native';
 import {
   useFonts,
   CormorantGaramond_400Regular,
@@ -30,6 +30,7 @@ import { RootStackParamList, TabParamList } from './src/types';
 import { COLORS, TYPOGRAPHY } from './src/utils/theme';
 
 import HomeScreen from './src/screens/HomeScreen';
+import GiftsScreen from './src/screens/GiftsScreen';
 import EventsScreen from './src/screens/EventsScreen';
 import GiversScreen from './src/screens/GiversScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -45,13 +46,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
 type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const HomeIcon = HomeLucide as unknown as LucideIcon;
 const GiftIcon = Gift as unknown as LucideIcon;
 const CakeIcon = Cake as unknown as LucideIcon;
 const UsersIcon = Users as unknown as LucideIcon;
 const SettingsLucide = SettingsIcon as unknown as LucideIcon;
 
 const TAB_ICONS: Record<string, LucideIcon> = {
-  Home: GiftIcon,
+  Home: HomeIcon,
+  Gifts: GiftIcon,
   Events: CakeIcon,
   Givers: UsersIcon,
   Settings: SettingsLucide,
@@ -85,7 +88,8 @@ function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Cadeaux' }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Accueil' }} />
+      <Tab.Screen name="Gifts" component={GiftsScreen} options={{ tabBarLabel: 'Cadeaux' }} />
       <Tab.Screen name="Events" component={EventsScreen} options={{ tabBarLabel: 'Événements' }} />
       <Tab.Screen name="Givers" component={GiversScreen} options={{ tabBarLabel: 'Donneurs' }} />
       <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: 'Réglages' }} />

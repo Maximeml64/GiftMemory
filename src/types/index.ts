@@ -43,6 +43,7 @@ export type RootStackParamList = {
 
 export type TabParamList = {
   Home: undefined;
+  Gifts: undefined;
   Events: undefined;
   Givers: undefined;
   Settings: undefined;
