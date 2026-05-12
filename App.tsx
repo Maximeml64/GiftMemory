@@ -7,12 +7,26 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {
+  useFonts,
+  CormorantGaramond_400Regular,
+  CormorantGaramond_400Regular_Italic,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from '@expo-google-fonts/cormorant-garamond';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 
 import { GiftsProvider } from './src/store/GiftsContext';
 import { EventsProvider } from './src/store/EventsContext';
 import { PurchaseProvider } from './src/store/PurchaseContext';
 import { RootStackParamList, TabParamList } from './src/types';
-import { Colors, Typography } from './src/utils/theme';
+import { COLORS, TYPOGRAPHY } from './src/utils/theme';
 
 import HomeScreen from './src/screens/HomeScreen';
 import EventsScreen from './src/screens/EventsScreen';
@@ -34,17 +48,21 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textTertiary,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
+          backgroundColor: COLORS.surface,
+          borderTopColor: COLORS.border,
           borderTopWidth: 1,
           height: 80,
           paddingBottom: 20,
           paddingTop: 8,
         },
-        tabBarLabelStyle: { ...Typography.captionMedium, marginTop: 2 },
+        tabBarLabelStyle: {
+          fontFamily: 'Inter_500Medium',
+          fontSize: 11,
+          marginTop: 2,
+        },
         tabBarIcon: ({ focused }) => {
           const icons: Record<string, string> = {
             Home: '🎁',
@@ -71,15 +89,27 @@ function TabNavigator() {
 export default function App() {
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
+  const [fontsLoaded] = useFonts({
+    CormorantGaramond_400Regular,
+    CormorantGaramond_400Regular_Italic,
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
   useEffect(() => {
     hasSeenOnboarding().then(setOnboardingDone);
   }, []);
 
-  // Loading state while checking AsyncStorage
-  if (onboardingDone === null) {
+  // Loading state while loading fonts or checking AsyncStorage
+  if (!fontsLoaded || onboardingDone === null) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background }}>
-        <ActivityIndicator color={Colors.primary} />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator color={COLORS.primary} />
       </View>
     );
   }
@@ -88,7 +118,7 @@ export default function App() {
   if (!onboardingDone) {
     return (
       <SafeAreaProvider>
-        <StatusBar style="dark" backgroundColor={Colors.background} />
+        <StatusBar style="dark" backgroundColor={COLORS.background} />
         <OnboardingScreen onDone={() => setOnboardingDone(true)} />
       </SafeAreaProvider>
     );
@@ -100,14 +130,14 @@ export default function App() {
         <EventsProvider>
           <PurchaseProvider>
             <NavigationContainer>
-              <StatusBar style="dark" backgroundColor={Colors.background} />
+              <StatusBar style="dark" backgroundColor={COLORS.background} />
               <Stack.Navigator
                 screenOptions={{
-                  headerStyle: { backgroundColor: Colors.background },
-                  headerTintColor: Colors.primary,
-                  headerTitleStyle: { ...Typography.titleMedium, color: Colors.text },
+                  headerStyle: { backgroundColor: COLORS.background },
+                  headerTintColor: COLORS.primary,
+                  headerTitleStyle: { ...TYPOGRAPHY.title },
                   headerShadowVisible: false,
-                  contentStyle: { backgroundColor: Colors.background },
+                  contentStyle: { backgroundColor: COLORS.background },
                 }}
               >
                 <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false, title: 'Accueil' }} />
