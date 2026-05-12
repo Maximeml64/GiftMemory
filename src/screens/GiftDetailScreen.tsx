@@ -1,14 +1,21 @@
 // src/screens/GiftDetailScreen.tsx
 
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { Alert, Image, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
-import { Colors, Occasions, Radius, Shadow, Spacing, Typography } from '../utils/theme';
+import {
+  Button,
+  Card,
+  InfoRow,
+  OccasionBadge,
+  StyledText,
+} from '../components/ui';
+import { COLORS, OCCASIONS, SPACING } from '../utils/theme';
 import { formatDate } from '../utils/dateUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -22,114 +29,121 @@ export default function GiftDetailScreen() {
 
   if (!gift) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.center}>
-          <Text style={styles.notFound}>Cadeau introuvable</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <StyledText variant="body" color={COLORS.textSecondary}>
+            Cadeau introuvable
+          </StyledText>
         </View>
       </SafeAreaView>
     );
   }
 
-  const occasion = Occasions[gift.occasion] ?? Occasions['Autre'];
+  const occasion = OCCASIONS[gift.occasion] ?? OCCASIONS.Autre;
   const isWine = gift.category === 'Vin & Spiritueux';
 
   function confirmDelete() {
     Alert.alert('Supprimer', `Supprimer "${gift!.name}" définitivement ?`, [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: async () => { await removeGift(gift!.id); navigation.goBack(); } },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: async () => {
+          await removeGift(gift!.id);
+          navigation.goBack();
+        },
+      },
     ]);
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroContainer}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Hero */}
+        <View style={{ width: '100%', aspectRatio: 1.2, backgroundColor: occasion.bg }}>
           {gift.imageUri ? (
-            <Image source={{ uri: gift.imageUri }} style={styles.heroImage} resizeMode="cover" />
+            <Image
+              source={{ uri: gift.imageUri }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
           ) : (
-            <View style={styles.heroPlaceholder}>
-              <Text style={styles.heroEmoji}>{isWine ? '🍷' : occasion.emoji}</Text>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <StyledText style={{ fontSize: 80, lineHeight: 92 }}>
+                {isWine ? '🍷' : occasion.emoji}
+              </StyledText>
             </View>
           )}
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.badgesRow}>
-            <View style={[styles.occasionBadge, { backgroundColor: occasion.color + '20' }]}>
-              <Text style={styles.occasionEmoji}>{occasion.emoji}</Text>
-              <Text style={[styles.occasionLabel, { color: occasion.color }]}>{occasion.label}</Text>
-            </View>
-            {isWine && (
-              <View style={styles.wineBadge}>
-                <Text style={styles.wineBadgeText}>🍷 Cave</Text>
+        <View style={{ paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg }}>
+          {/* Badges */}
+          <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md }}>
+            <OccasionBadge occasion={gift.occasion} />
+            {isWine ? (
+              <View
+                style={{
+                  paddingVertical: 4,
+                  paddingHorizontal: SPACING.md,
+                  borderRadius: 999,
+                  backgroundColor: '#EBDDE6',
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: SPACING.xs,
+                }}
+              >
+                <StyledText style={{ fontSize: 13 }}>🍷</StyledText>
+                <StyledText variant="smallMedium" color="#4A1942">Cave</StyledText>
               </View>
-            )}
+            ) : null}
           </View>
 
-          <Text style={styles.giftName}>{gift.name}</Text>
+          {/* Name */}
+          <StyledText variant="h1" style={{ marginBottom: SPACING.xl }}>
+            {gift.name}
+          </StyledText>
 
-          <View style={styles.metaCard}>
-            <MetaRow icon="👤" label="Offert par" value={gift.giver} />
-            <View style={styles.divider} />
-            <MetaRow icon="📅" label="Date" value={formatDate(gift.date)} />
-            {isWine && gift.appellation && (<><View style={styles.divider} /><MetaRow icon="📍" label="Appellation" value={gift.appellation} /></>)}
-            {isWine && gift.vintage && (<><View style={styles.divider} /><MetaRow icon="🗓" label="Millésime" value={gift.vintage} /></>)}
-            {isWine && gift.quantity !== undefined && (<><View style={styles.divider} /><MetaRow icon="🔢" label="Bouteilles" value={`${gift.quantity} bouteille${gift.quantity > 1 ? 's' : ''}`} /></>)}
+          {/* Meta card */}
+          <Card padding="none" style={{ overflow: 'hidden', marginBottom: SPACING.xl }}>
+            <View style={{ paddingHorizontal: SPACING.base }}>
+              <InfoRow label="Offert par" value={gift.giver} />
+              <InfoRow label="Date" value={formatDate(gift.date)} divider={isWine} />
+              {isWine && gift.appellation ? (
+                <InfoRow label="Appellation" value={gift.appellation} divider={!!gift.vintage || gift.quantity !== undefined} />
+              ) : null}
+              {isWine && gift.vintage ? (
+                <InfoRow label="Millésime" value={gift.vintage} divider={gift.quantity !== undefined} />
+              ) : null}
+              {isWine && gift.quantity !== undefined ? (
+                <InfoRow
+                  label="Bouteilles"
+                  value={`${gift.quantity} bouteille${gift.quantity > 1 ? 's' : ''}`}
+                  divider={false}
+                />
+              ) : null}
+            </View>
+          </Card>
+
+          {/* Actions */}
+          <View style={{ gap: SPACING.sm }}>
+            <Button
+              label="Modifier"
+              variant="secondary"
+              size="lg"
+              fullWidth
+              onPress={() => navigation.navigate('AddGift', { giftId: gift.id })}
+            />
+            <Button
+              label="Supprimer"
+              variant="danger"
+              size="lg"
+              fullWidth
+              onPress={confirmDelete}
+            />
           </View>
-
-          <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('AddGift', { giftId: gift.id })} activeOpacity={0.85}>
-            <Text style={styles.editBtnText}>✏️  Modifier</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete} activeOpacity={0.85}>
-            <Text style={styles.deleteBtnText}>🗑  Supprimer</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-function MetaRow({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <View style={metaStyles.row}>
-      <Text style={metaStyles.icon}>{icon}</Text>
-      <View style={metaStyles.text}>
-        <Text style={metaStyles.label}>{label}</Text>
-        <Text style={metaStyles.value}>{value}</Text>
-      </View>
-    </View>
-  );
-}
-
-const metaStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: Spacing.md },
-  icon: { fontSize: 20, marginRight: 12 },
-  text: { flex: 1 },
-  label: { ...Typography.caption, color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  value: { ...Typography.bodyMedium, color: Colors.text },
-});
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFound: { ...Typography.body, color: Colors.textSecondary },
-  scroll: { paddingBottom: 40 },
-  heroContainer: { width: '100%', aspectRatio: 1.2, backgroundColor: Colors.shimmer },
-  heroImage: { width: '100%', height: '100%' },
-  heroPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  heroEmoji: { fontSize: 80 },
-  content: { padding: Spacing.lg },
-  badgesRow: { flexDirection: 'row', gap: 8, marginBottom: Spacing.sm },
-  occasionBadge: { flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.full, gap: 6 },
-  occasionEmoji: { fontSize: 16 },
-  occasionLabel: { ...Typography.captionMedium, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  wineBadge: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.full, backgroundColor: '#8B1A1A20' },
-  wineBadgeText: { ...Typography.captionMedium, color: '#8B1A1A', fontWeight: '600' },
-  giftName: { ...Typography.displayMedium, color: Colors.text, marginBottom: Spacing.lg },
-  metaCard: { backgroundColor: Colors.surface, borderRadius: Radius.lg, marginBottom: Spacing.lg, ...Shadow.sm, overflow: 'hidden' },
-  divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: Spacing.md },
-  editBtn: { backgroundColor: Colors.surface, borderRadius: Radius.lg, paddingVertical: 15, alignItems: 'center', marginBottom: Spacing.sm, borderWidth: 1.5, borderColor: Colors.border, ...Shadow.sm },
-  editBtnText: { ...Typography.bodyMedium, color: Colors.text, fontWeight: '600' },
-  deleteBtn: { backgroundColor: Colors.dangerLight, borderRadius: Radius.lg, paddingVertical: 15, alignItems: 'center', borderWidth: 1.5, borderColor: Colors.danger + '30' },
-  deleteBtnText: { ...Typography.bodyMedium, color: Colors.danger, fontWeight: '600' },
-});
