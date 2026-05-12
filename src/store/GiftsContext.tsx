@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { Gift } from '../types';
 import { loadGifts, upsertGift, deleteGift, validateImageUris, saveGifts } from '../utils/storage';
+import { cancelThankYouReminder, scheduleThankYouReminder } from '../utils/notifications';
 
 interface GiftsState {
   gifts: Gift[];
@@ -85,6 +86,9 @@ export function GiftsProvider({ children }: { children: ReactNode }) {
     try {
       const updated = await upsertGift(gift);
       dispatch({ type: 'SET_GIFTS', payload: updated });
+      // Fire-and-forget : schedule (or refresh) the thank-you reminder. It
+      // no-ops for non-received / non-done gifts and when permissions are off.
+      void scheduleThankYouReminder(gift);
     } catch (e) {
       dispatch({ type: 'SET_ERROR', payload: 'Erreur de sauvegarde' });
       throw e;
@@ -95,6 +99,7 @@ export function GiftsProvider({ children }: { children: ReactNode }) {
     try {
       const updated = await deleteGift(giftId);
       dispatch({ type: 'SET_GIFTS', payload: updated });
+      void cancelThankYouReminder(giftId);
     } catch (e) {
       dispatch({ type: 'SET_ERROR', payload: 'Erreur de suppression' });
       throw e;

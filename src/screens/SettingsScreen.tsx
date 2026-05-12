@@ -1,13 +1,14 @@
 // src/screens/SettingsScreen.tsx
 
-import React from 'react';
-import { Alert, Linking, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Linking, Switch, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronRight, FileText, Lock, Mail, Sparkles } from 'lucide-react-native';
+import { Bell, ChevronRight, FileText, Lock, Mail, Sparkles } from 'lucide-react-native';
 
 import { RootStackParamList } from '../types';
 import { usePurchase } from '../store/PurchaseContext';
+import { useGifts } from '../store/GiftsContext';
 import {
   Card,
   Divider,
@@ -15,6 +16,12 @@ import {
   StyledText,
 } from '../components/ui';
 import { COLORS, RADIUS, SPACING } from '../utils/theme';
+import {
+  cancelAllThankYouReminders,
+  isThankYouRemindersEnabled,
+  rescheduleAllThankYouReminders,
+  setThankYouRemindersEnabled,
+} from '../utils/notifications';
 
 const PRIVACY_POLICY_URL = 'https://momentous-locket-2af.notion.site/Politique-de-Confidentialit-GiftMemory-35684071bf3e803fafecdc548d553ef5';
 const CGU_URL = 'https://momentous-locket-2af.notion.site/Conditions-G-n-rales-d-Utilisation-GiftMemory-35684071bf3e80288fd1f4947a1928d2';
@@ -22,6 +29,7 @@ const CGU_URL = 'https://momentous-locket-2af.notion.site/Conditions-G-n-rales-d
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
+const BellIcon = Bell as unknown as LucideIcon;
 const ChevronIcon = ChevronRight as unknown as LucideIcon;
 const FileTextIcon = FileText as unknown as LucideIcon;
 const LockIcon = Lock as unknown as LucideIcon;
@@ -31,6 +39,22 @@ const SparklesIcon = Sparkles as unknown as LucideIcon;
 export default function SettingsScreen() {
   const navigation = useNavigation<Nav>();
   const { isPremium } = usePurchase();
+  const { gifts } = useGifts();
+  const [thankYouEnabled, setThankYouEnabledState] = useState(true);
+
+  useEffect(() => {
+    isThankYouRemindersEnabled().then(setThankYouEnabledState);
+  }, []);
+
+  async function toggleThankYou(value: boolean) {
+    setThankYouEnabledState(value);
+    await setThankYouRemindersEnabled(value);
+    if (value) {
+      await rescheduleAllThankYouReminders(gifts);
+    } else {
+      await cancelAllThankYouReminders(gifts);
+    }
+  }
 
   async function openMail() {
     const url = 'mailto:m.maurylaribiere@gmail.com?subject=GiftMemory%20-%20Question%20%2F%20Probl%C3%A8me';
@@ -103,6 +127,36 @@ export default function SettingsScreen() {
           <ChevronIcon color={COLORS.textInverse} size={20} />
         </TouchableOpacity>
       ) : null}
+
+      {/* Section Rappels */}
+      <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm, marginLeft: SPACING.xs }}>
+        Rappels
+      </StyledText>
+      <Card padding="none" style={{ marginBottom: SPACING.lg, overflow: 'hidden' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: SPACING.md,
+            paddingHorizontal: SPACING.base,
+            gap: SPACING.md,
+          }}
+        >
+          <BellIcon color={COLORS.textSecondary} size={20} />
+          <View style={{ flex: 1 }}>
+            <StyledText variant="bodyMedium">Penser à remercier</StyledText>
+            <StyledText variant="caption" color={COLORS.textSecondary} style={{ marginTop: 2 }}>
+              Notification le lendemain d'un cadeau reçu
+            </StyledText>
+          </View>
+          <Switch
+            value={thankYouEnabled}
+            onValueChange={toggleThankYou}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={COLORS.surface}
+          />
+        </View>
+      </Card>
 
       {/* Section Légal */}
       <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm, marginLeft: SPACING.xs }}>
