@@ -536,7 +536,7 @@ export default function AddGiftScreen() {
                   gap: SPACING.sm,
                 }}
               >
-                <StyledText style={{ fontSize: 36 }}>{isWine ? '🍷' : '📸'}</StyledText>
+                <StyledText style={{ fontSize: 36, lineHeight: 44 }}>{isWine ? '🍷' : '📸'}</StyledText>
                 <StyledText variant="smallMedium" color={COLORS.textSecondary}>
                   Ajouter une photo
                 </StyledText>
