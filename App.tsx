@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Cake, Gift, Home as HomeLucide, Settings as SettingsIcon, Users } from 'lucide-react-native';
 import {
@@ -136,11 +137,12 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <GiftsProvider>
-        <EventsProvider>
-          <PurchaseProvider>
-            <NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <GiftsProvider>
+          <EventsProvider>
+            <PurchaseProvider>
+              <NavigationContainer>
               <StatusBar style="dark" backgroundColor={COLORS.background} />
               <Stack.Navigator
                 screenOptions={{
@@ -204,11 +206,12 @@ export default function App() {
                   options={{ presentation: 'modal', headerShown: false }}
                 />
 
-              </Stack.Navigator>
-            </NavigationContainer>
-          </PurchaseProvider>
-        </EventsProvider>
-      </GiftsProvider>
-    </SafeAreaProvider>
+                </Stack.Navigator>
+              </NavigationContainer>
+            </PurchaseProvider>
+          </EventsProvider>
+        </GiftsProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
