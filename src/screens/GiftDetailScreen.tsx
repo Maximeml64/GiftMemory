@@ -5,26 +5,24 @@ import { Alert, Image, Linking, ScrollView, TouchableOpacity, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowDownLeft, ArrowUpRight, ExternalLink, MapPin } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { RootStackParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
 import {
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
   Badge,
   Button,
   Card,
+  ExternalLinkIcon,
   InfoRow,
+  MapPinIcon,
   OccasionBadge,
   StyledText,
 } from '../components/ui';
 import { COLORS, OCCASIONS, RADIUS, SPACING } from '../utils/theme';
 import { formatDate } from '../utils/dateUtils';
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const InIcon = ArrowDownLeft as unknown as LucideIcon;
-const OutIcon = ArrowUpRight as unknown as LucideIcon;
-const ExternalLinkIcon = ExternalLink as unknown as LucideIcon;
-const MapPinIcon = MapPin as unknown as LucideIcon;
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'GiftDetail'>;
@@ -61,7 +59,16 @@ export default function GiftDetailScreen() {
 
   async function openUrl(raw: string) {
     let url = raw.trim();
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) {
+      // Reject any other scheme the user might have typed (mailto:, javascript:,
+      // app://, etc.) — we only handle http(s) links here.
+      if (/^[a-z][a-z0-9+.-]*:/i.test(url)) {
+        Alert.alert('Lien invalide', 'Seuls les liens http(s) sont supportés.');
+        return;
+      }
+      url = 'https://' + url;
+    }
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
@@ -81,6 +88,7 @@ export default function GiftDetailScreen() {
         text: 'Supprimer',
         style: 'destructive',
         onPress: async () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
           await removeGift(gift!.id);
           navigation.goBack();
         },
@@ -147,8 +155,8 @@ export default function GiftDetailScreen() {
               bg={COLORS.primaryMuted}
               icon={
                 isGiven
-                  ? <OutIcon color={COLORS.primary} size={13} />
-                  : <InIcon color={COLORS.primary} size={13} />
+                  ? <ArrowUpRightIcon color={COLORS.primary} size={13} />
+                  : <ArrowDownLeftIcon color={COLORS.primary} size={13} />
               }
             />
             <OccasionBadge occasion={gift.occasion} />

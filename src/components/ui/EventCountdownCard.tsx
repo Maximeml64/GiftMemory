@@ -6,7 +6,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { COLORS, FONTS, OCCASIONS, SPACING } from '../../utils/theme';
-import { CalendarEvent, Occasion } from '../../types';
+import { CalendarEvent } from '../../types';
+import { eventTypeToOccasion } from '../../utils/eventUtils';
 import { Card } from './Card';
 import { OccasionBadge } from './OccasionBadge';
 import { StyledText } from './StyledText';
@@ -23,14 +24,6 @@ const MONTH_LABELS = [
   'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
   'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
 ];
-
-// EventType -> Occasion mapping (les types coïncident sauf "Mariage" et "Naissance")
-function eventTypeToOccasion(type: CalendarEvent['type']): Occasion {
-  if (type === 'Anniversaire' || type === 'Mariage' || type === 'Naissance') {
-    return type;
-  }
-  return 'Autre';
-}
 
 export function EventCountdownCard({ event, daysUntil, onPress, ideaCount, lastYearGiftName }: Props) {
   const occasion = OCCASIONS[eventTypeToOccasion(event.type)] ?? OCCASIONS.Autre;

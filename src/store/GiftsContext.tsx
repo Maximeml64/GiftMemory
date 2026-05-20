@@ -11,6 +11,7 @@ import React, {
 import { Gift } from '../types';
 import { loadGifts, upsertGift, deleteGift, validateImageUris, saveGifts } from '../utils/storage';
 import { cancelThankYouReminder, scheduleThankYouReminder } from '../utils/notifications';
+import { samePerson } from '../utils/eventUtils';
 
 interface GiftsState {
   gifts: Gift[];
@@ -112,10 +113,7 @@ export function GiftsProvider({ children }: { children: ReactNode }) {
   );
 
   const getGiftsByGiver = useCallback(
-    (giverName: string) =>
-      state.gifts.filter(
-        (g) => g.giver.toLowerCase() === giverName.toLowerCase()
-      ),
+    (giverName: string) => state.gifts.filter((g) => samePerson(g.giver, giverName)),
     [state.gifts]
   );
 

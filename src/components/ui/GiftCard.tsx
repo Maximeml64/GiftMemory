@@ -7,15 +7,11 @@
 
 import React from 'react';
 import { Image, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react-native';
 import { COLORS, OCCASIONS, RADIUS, SHADOWS, SPACING } from '../../utils/theme';
 import { Gift } from '../../types';
+import { ArrowDownLeftIcon, ArrowUpRightIcon } from './icons';
 import { OccasionBadge } from './OccasionBadge';
 import { StyledText } from './StyledText';
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const InIcon = ArrowDownLeft as unknown as LucideIcon;
-const OutIcon = ArrowUpRight as unknown as LucideIcon;
 
 interface Props {
   gift: Gift;
@@ -27,7 +23,7 @@ export function GiftCard({ gift, width, onPress }: Props) {
   const occasion = OCCASIONS[gift.occasion] ?? OCCASIONS.Autre;
   const isGiven = gift.direction === 'given';
   const isIdea = gift.status === 'idea';
-  const DirectionIcon = isGiven ? OutIcon : InIcon;
+  const DirectionIcon = isGiven ? ArrowUpRightIcon : ArrowDownLeftIcon;
 
   const containerStyle: ViewStyle = {
     width,

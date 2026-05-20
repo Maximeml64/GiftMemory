@@ -15,6 +15,7 @@ import {
   StyledText,
 } from '../components/ui';
 import { COLORS, SPACING } from '../utils/theme';
+import { samePerson } from '../utils/eventUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -28,7 +29,7 @@ export default function GiversScreen() {
     () =>
       getUniqueGivers().map((name) => ({
         name,
-        count: gifts.filter((g) => g.giver.toLowerCase() === name.toLowerCase()).length,
+        count: gifts.filter((g) => samePerson(g.giver, name)).length,
       })),
     [gifts, getUniqueGivers]
   );

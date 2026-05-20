@@ -9,21 +9,23 @@ import { useNavigation } from '@react-navigation/native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Gift as GiftLucide, Cake, Plus, Users } from 'lucide-react-native';
-
 import { RootStackParamList, TabParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
 import { useEvents } from '../store/EventsContext';
 import { usePremiumGate } from '../hooks/usePremiumGate';
 import {
   Button,
+  CakeIcon,
   Card,
   EmptyState,
   EventCountdownCard,
   GiftCard,
+  GiftIcon,
+  PlusIcon,
   ScreenWrapper,
   SectionHeader,
   StyledText,
+  UsersIcon,
 } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 import { daysUntilNext, ideasForPerson, lastYearGiftForEvent, sortEventsByNext } from '../utils/eventUtils';
@@ -32,12 +34,6 @@ type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
   NativeStackNavigationProp<RootStackParamList>
 >;
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const GiftIcon = GiftLucide as unknown as LucideIcon;
-const CakeIcon = Cake as unknown as LucideIcon;
-const UsersIcon = Users as unknown as LucideIcon;
-const PlusIcon = Plus as unknown as LucideIcon;
 
 const SCREEN_PADDING = SPACING.lg;
 const MINI_CARD_GAP = SPACING.sm;
@@ -217,16 +213,29 @@ export default function HomeScreen() {
           emoji="🎁"
           title="Commençons à remplir votre boîte"
           description="Notez un premier cadeau ou ajoutez l'anniversaire d'un proche pour démarrer."
-          ctaLabel="Ajouter un cadeau"
-          onCtaPress={() => {
-            if (checkGiftLimit()) navigation.navigate('AddGift', undefined);
-          }}
           paddingVertical={SPACING.xl}
         />
-        <View style={{ alignItems: 'center', marginTop: -SPACING.lg }}>
+        <View
+          style={{
+            paddingHorizontal: SPACING.xl,
+            gap: SPACING.sm,
+            marginTop: -SPACING.sm,
+          }}
+        >
+          <Button
+            label="Ajouter un cadeau"
+            variant="primary"
+            size="lg"
+            fullWidth
+            onPress={() => {
+              if (checkGiftLimit()) navigation.navigate('AddGift', undefined);
+            }}
+          />
           <Button
             label="Ajouter un événement"
-            variant="ghost"
+            variant="secondary"
+            size="lg"
+            fullWidth
             onPress={() => {
               if (checkEventLimit()) navigation.navigate('AddEvent', undefined);
             }}

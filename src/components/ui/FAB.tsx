@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { TouchableOpacity, ViewStyle } from 'react-native';
-import { Plus } from 'lucide-react-native';
+import { PlusIcon } from './icons';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../utils/theme';
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
 
 export function FAB({
   onPress,
-  icon: Icon = Plus,
+  icon: Icon = PlusIcon,
   size = 56,
   bottom = SPACING.xl,
   right = SPACING.lg,

@@ -3,9 +3,9 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { ActivityIndicator, Alert, FlatList, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Trash2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Haptics from 'expo-haptics';
 
 import { CalendarEvent, RootStackParamList } from '../types';
 import { useEvents } from '../store/EventsContext';
@@ -16,6 +16,7 @@ import {
   FAB,
   ScreenWrapper,
   StyledText,
+  TrashIcon,
 } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 import { daysUntilNext, sortEventsByNext } from '../utils/eventUtils';
@@ -49,6 +50,7 @@ function SwipeableEventRow({ event, onPress, onDelete }: SwipeableEventRowProps)
           text: 'Supprimer',
           style: 'destructive',
           onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
             swipeRef.current?.close();
             onDelete();
           },
@@ -71,7 +73,7 @@ function SwipeableEventRow({ event, onPress, onDelete }: SwipeableEventRowProps)
         gap: 4,
       }}
     >
-      <Trash2 color="#fff" size={22} />
+      <TrashIcon color="#fff" size={22} />
       <StyledText variant="caption" color="#fff" style={{ fontWeight: '700', letterSpacing: 0.3 }}>
         Supprimer
       </StyledText>

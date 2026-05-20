@@ -5,7 +5,6 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -17,7 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useHeaderHeight } from '@react-navigation/elements';
 import * as ImagePicker from 'expo-image-picker';
 import * as Crypto from 'expo-crypto';
-import { Pencil, Plus, X } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import {
   RootStackParamList,
@@ -35,17 +34,18 @@ import {
 } from '../utils/storage';
 import OccasionPicker from '../components/OccasionPicker';
 import DatePickerField from '../components/DatePickerField';
-import { Button, StyledText } from '../components/ui';
+import {
+  Button,
+  PencilIcon,
+  PlusIcon,
+  StyledText,
+  XIcon,
+} from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 import { todayISO } from '../utils/dateUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'AddGift'>;
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const PencilIcon = Pencil as unknown as LucideIcon;
-const PlusIcon = Plus as unknown as LucideIcon;
-const XIcon = X as unknown as LucideIcon;
 
 const SCREEN_PADDING = SPACING.lg;
 const ADDITIONAL_THUMB = 72;
@@ -278,7 +278,7 @@ export default function AddGiftScreen() {
     const result = fromCamera
       ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 })
       : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'],
           allowsEditing: true,
           aspect: [1, 1],
           quality: 0.8,
@@ -307,7 +307,7 @@ export default function AddGiftScreen() {
 
   async function addAdditionalPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: false,
       quality: 0.8,
     });
@@ -405,13 +405,15 @@ export default function AddGiftScreen() {
         ...(isWine && {
           vintage: vintage.trim() || undefined,
           appellation: appellation.trim() || undefined,
-          quantity: Math.max(1, parseInt(quantity, 10) || 1),
+          quantity: Math.min(999, Math.max(1, parseInt(quantity, 10) || 1)),
         }),
       };
       await saveGift(gift);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       navigation.goBack();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       Alert.alert('Erreur', `Impossible de sauvegarder.\n${msg}`);
     } finally {
       setSaving(false);
@@ -421,7 +423,7 @@ export default function AddGiftScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         keyboardVerticalOffset={headerHeight}
         style={{ flex: 1 }}
       >

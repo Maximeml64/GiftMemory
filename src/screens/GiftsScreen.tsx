@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Search, X } from 'lucide-react-native';
 
 import { RootStackParamList } from '../types';
 import { useGifts } from '../store/GiftsContext';
@@ -22,7 +21,9 @@ import {
   FAB,
   GiftCard,
   ScreenWrapper,
+  SearchIcon,
   StyledText,
+  XIcon,
 } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
@@ -30,9 +31,6 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type SortKey = 'date' | 'name' | 'giver';
 type DirectionFilter = 'all' | 'received' | 'given';
 type StatusView = 'done' | 'idea';
-
-const SearchIcon = Search as unknown as React.ComponentType<{ color?: string; size?: number }>;
-const XIcon = X as unknown as React.ComponentType<{ color?: string; size?: number }>;
 
 const SORT_LABELS: Record<SortKey, string> = {
   date: 'Récent',
@@ -49,7 +47,7 @@ const DIRECTION_LABELS: Record<DirectionFilter, string> = {
 const GRID_GAP = SPACING.md;
 const SCREEN_PADDING = SPACING.lg;
 
-export default function HomeScreen() {
+export default function GiftsScreen() {
   const navigation = useNavigation<Nav>();
   const { gifts, loading } = useGifts();
   const { checkGiftLimit } = usePremiumGate();

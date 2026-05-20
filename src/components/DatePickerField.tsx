@@ -3,10 +3,10 @@
 
 import React, { useState } from 'react';
 import { Modal, Pressable, TouchableOpacity, View } from 'react-native';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 import { formatDate, toISODateString } from '../utils/dateUtils';
 import { Button } from './ui/Button';
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from './ui/icons';
 import { StyledText } from './ui/StyledText';
 
 interface Props {
@@ -18,11 +18,6 @@ const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const CalendarIcon = Calendar as unknown as LucideIcon;
-const ChevronLeftIcon = ChevronLeft as unknown as LucideIcon;
-const ChevronRightIcon = ChevronRight as unknown as LucideIcon;
 
 export default function DatePickerField({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
