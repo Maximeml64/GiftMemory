@@ -5,10 +5,22 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Cake, Gift, Home as HomeLucide, Settings as SettingsIcon, Users } from 'lucide-react-native';
+import * as Sentry from '@sentry/react-native';
+
+// Initialise Sentry as early as possible so any failure during render or
+// during the provider boot sequence below is captured. Disabled in dev so
+// it doesn't pollute the project quota with hot-reload errors. The DSN
+// is read from the public env so it can be set per EAS profile without
+// touching code.
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  enabled: !__DEV__,
+  tracesSampleRate: 0.2,
+});
+import { CakeIcon, GiftIcon, HomeIcon, SettingsIcon, UsersIcon, XIcon } from './src/components/ui/icons';
 import {
   useFonts,
   CormorantGaramond_400Regular,
@@ -27,6 +39,7 @@ import {
 import { GiftsProvider } from './src/store/GiftsContext';
 import { EventsProvider } from './src/store/EventsContext';
 import { PurchaseProvider } from './src/store/PurchaseContext';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { RootStackParamList, TabParamList } from './src/types';
 import { COLORS, TYPOGRAPHY } from './src/utils/theme';
 
@@ -46,20 +59,31 @@ import OnboardingScreen, { hasSeenOnboarding } from './src/screens/OnboardingScr
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const HomeIcon = HomeLucide as unknown as LucideIcon;
-const GiftIcon = Gift as unknown as LucideIcon;
-const CakeIcon = Cake as unknown as LucideIcon;
-const UsersIcon = Users as unknown as LucideIcon;
-const SettingsLucide = SettingsIcon as unknown as LucideIcon;
-
-const TAB_ICONS: Record<string, LucideIcon> = {
+const TAB_ICONS: Record<string, React.ComponentType<{ color?: string; size?: number }>> = {
   Home: HomeIcon,
   Gifts: GiftIcon,
   Events: CakeIcon,
   Givers: UsersIcon,
-  Settings: SettingsLucide,
+  Settings: SettingsIcon,
 };
+
+// Renders the close (X) button shown in the header-left slot of modal
+// screens. Wrapped in a fixed-size box so the icon is vertically centered
+// against the header title (a bare 22px icon in the slot ends up looking
+// top-aligned on iOS).
+function ModalCloseButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="Fermer"
+      style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <XIcon color={COLORS.primary} size={22} />
+    </TouchableOpacity>
+  );
+}
 
 function TabNavigator() {
   return (
@@ -98,7 +122,9 @@ function TabNavigator() {
   );
 }
 
-export default function App() {
+export default Sentry.wrap(App);
+
+function App() {
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   const [fontsLoaded] = useFonts({
@@ -139,10 +165,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <GiftsProvider>
-          <EventsProvider>
-            <PurchaseProvider>
-              <NavigationContainer>
+        <ErrorBoundary>
+          <GiftsProvider>
+            <EventsProvider>
+              <PurchaseProvider>
+                <NavigationContainer>
               <StatusBar style="dark" backgroundColor={COLORS.background} />
               <Stack.Navigator
                 screenOptions={{
@@ -157,14 +184,14 @@ export default function App() {
                 <Stack.Screen
                   name="AddGift"
                   component={AddGiftScreen}
-                  options={({ route }) => ({
+                  options={({ navigation, route }) => ({
                     title: route.params?.giftId
                       ? 'Modifier'
                       : route.params?.initialStatus === 'idea'
                         ? 'Nouvelle idée'
                         : 'Nouveau cadeau',
                     presentation: 'modal',
-                    headerLeft: () => null,
+                    headerLeft: () => <ModalCloseButton onPress={() => navigation.goBack()} />,
                   })}
                 />
                 <Stack.Screen
@@ -186,10 +213,10 @@ export default function App() {
                 <Stack.Screen
                   name="AddEvent"
                   component={AddEventScreen}
-                  options={({ route }) => ({
+                  options={({ navigation, route }) => ({
                     title: route.params?.eventId ? 'Modifier' : 'Nouvel événement',
                     presentation: 'modal',
-                    headerLeft: () => null,
+                    headerLeft: () => <ModalCloseButton onPress={() => navigation.goBack()} />,
                   })}
                 />
                 <Stack.Screen
@@ -207,10 +234,11 @@ export default function App() {
                 />
 
                 </Stack.Navigator>
-              </NavigationContainer>
-            </PurchaseProvider>
-          </EventsProvider>
-        </GiftsProvider>
+                </NavigationContainer>
+              </PurchaseProvider>
+            </EventsProvider>
+          </GiftsProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

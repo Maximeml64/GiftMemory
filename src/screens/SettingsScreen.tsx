@@ -1,18 +1,26 @@
 // src/screens/SettingsScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, Switch, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, Share, Switch, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bell, ChevronRight, FileText, Lock, Mail, Sparkles } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { RootStackParamList } from '../types';
 import { usePurchase } from '../store/PurchaseContext';
 import { useGifts } from '../store/GiftsContext';
 import {
+  BellIcon,
   Card,
+  ChevronRightIcon,
   Divider,
+  DownloadIcon,
+  FileTextIcon,
+  LockIcon,
+  MailIcon,
   ScreenWrapper,
+  SparklesIcon,
   StyledText,
 } from '../components/ui';
 import { COLORS, RADIUS, SPACING } from '../utils/theme';
@@ -23,18 +31,12 @@ import {
   setThankYouRemindersEnabled,
 } from '../utils/notifications';
 
+const BACKUP_SCHEMA_VERSION = 1;
+
 const PRIVACY_POLICY_URL = 'https://momentous-locket-2af.notion.site/Politique-de-Confidentialit-GiftMemory-35684071bf3e803fafecdc548d553ef5';
 const CGU_URL = 'https://momentous-locket-2af.notion.site/Conditions-G-n-rales-d-Utilisation-GiftMemory-35684071bf3e80288fd1f4947a1928d2';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const BellIcon = Bell as unknown as LucideIcon;
-const ChevronIcon = ChevronRight as unknown as LucideIcon;
-const FileTextIcon = FileText as unknown as LucideIcon;
-const LockIcon = Lock as unknown as LucideIcon;
-const MailIcon = Mail as unknown as LucideIcon;
-const SparklesIcon = Sparkles as unknown as LucideIcon;
 
 export default function SettingsScreen() {
   const navigation = useNavigation<Nav>();
@@ -53,6 +55,29 @@ export default function SettingsScreen() {
       await rescheduleAllThankYouReminders(gifts);
     } else {
       await cancelAllThankYouReminders(gifts);
+    }
+  }
+
+  async function exportBackup() {
+    try {
+      const giftsRaw = (await AsyncStorage.getItem('@gift_memory_gifts')) ?? '[]';
+      const eventsRaw = (await AsyncStorage.getItem('@gift_memory_events')) ?? '[]';
+      const payload = JSON.stringify(
+        {
+          schemaVersion: BACKUP_SCHEMA_VERSION,
+          exportedAt: new Date().toISOString(),
+          gifts: JSON.parse(giftsRaw),
+          events: JSON.parse(eventsRaw),
+        },
+        null,
+        2,
+      );
+      const stamp = new Date().toISOString().split('T')[0];
+      const dest = `${FileSystem.cacheDirectory}giftmemory-backup-${stamp}.json`;
+      await FileSystem.writeAsStringAsync(dest, payload, { encoding: 'utf8' });
+      await Share.share({ url: dest, title: 'Sauvegarde GiftMemory' });
+    } catch (e) {
+      Alert.alert('Erreur', 'Impossible de générer la sauvegarde.');
     }
   }
 
@@ -124,7 +149,7 @@ export default function SettingsScreen() {
               Cadeaux et événements illimités
             </StyledText>
           </View>
-          <ChevronIcon color={COLORS.textInverse} size={20} />
+          <ChevronRightIcon color={COLORS.textInverse} size={20} />
         </TouchableOpacity>
       ) : null}
 
@@ -173,6 +198,19 @@ export default function SettingsScreen() {
           icon={<LockIcon color={COLORS.textSecondary} size={20} />}
           label="Politique de confidentialité"
           onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+        />
+      </Card>
+
+      {/* Section Données */}
+      <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm, marginLeft: SPACING.xs }}>
+        Données
+      </StyledText>
+      <Card padding="none" style={{ marginBottom: SPACING.lg, overflow: 'hidden' }}>
+        <SettingsRow
+          icon={<DownloadIcon color={COLORS.textSecondary} size={20} />}
+          label="Exporter mes données"
+          sublabel="Cadeaux et événements (sans les photos)"
+          onPress={exportBackup}
         />
       </Card>
 
@@ -234,7 +272,7 @@ function SettingsRow({
           </StyledText>
         ) : null}
       </View>
-      <ChevronIcon color={COLORS.textTertiary} size={20} />
+      <ChevronRightIcon color={COLORS.textTertiary} size={20} />
     </TouchableOpacity>
   );
 }

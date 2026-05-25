@@ -6,7 +6,6 @@
 import React from 'react';
 import {
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   ScrollViewProps,
   StatusBar,
@@ -57,10 +56,7 @@ export function ScreenWrapper({
   );
 
   const content = keyboardAvoiding ? (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       {inner}
     </KeyboardAvoidingView>
   ) : (

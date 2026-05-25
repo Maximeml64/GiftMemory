@@ -1,10 +1,20 @@
 // src/utils/eventUtils.ts
 
-import { CalendarEvent, Gift } from '../types';
+import { CalendarEvent, EventType, Gift, Occasion } from '../types';
 
 // Person-name matching used for anti-repetition and wishlist lookups.
-function samePerson(a: string, b: string): boolean {
+// Exported so screens and contexts share the same trim+casefold semantics.
+export function samePerson(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+// EventType -> Occasion mapping. EventType is a subset of Occasion ('Noël'
+// is the only Occasion-only value), so non-matching values collapse to 'Autre'.
+export function eventTypeToOccasion(type: EventType): Occasion {
+  if (type === 'Anniversaire' || type === 'Mariage' || type === 'Naissance') {
+    return type;
+  }
+  return 'Autre';
 }
 
 // Returns the gift offered to this person closest to last year's occurrence

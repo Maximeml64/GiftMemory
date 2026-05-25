@@ -2,16 +2,12 @@
 
 import React, { useState } from 'react';
 import { FlatList, Modal, Pressable, TouchableOpacity, View } from 'react-native';
-import { ChevronRight, Check } from 'lucide-react-native';
 import { Occasion } from '../types';
 import { COLORS, OCCASIONS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
+import { CheckIcon, ChevronRightIcon } from './ui/icons';
 import { StyledText } from './ui/StyledText';
 
 const ORDER: Occasion[] = ['Anniversaire', 'Noël', 'Naissance', 'Mariage', 'Autre'];
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const ChevronIcon = ChevronRight as unknown as LucideIcon;
-const CheckIcon = Check as unknown as LucideIcon;
 
 interface Props {
   value: Occasion;
@@ -43,7 +39,7 @@ export default function OccasionPicker({ value, onChange }: Props) {
         <StyledText variant="body" style={{ flex: 1 }}>
           {current.label}
         </StyledText>
-        <ChevronIcon color={COLORS.textTertiary} size={18} />
+        <ChevronRightIcon color={COLORS.textTertiary} size={18} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>

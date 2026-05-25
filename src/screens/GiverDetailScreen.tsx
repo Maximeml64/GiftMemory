@@ -52,7 +52,9 @@ export default function GiverDetailScreen() {
   const { getGiftsByGiver } = useGifts();
 
   const { giverName } = route.params;
-  const gifts = getGiftsByGiver(giverName);
+  // getGiftsByGiver returns a fresh array on each render — memoize so the
+  // useMemos below don't re-run unnecessarily.
+  const gifts = useMemo(() => getGiftsByGiver(giverName), [getGiftsByGiver, giverName]);
 
   const ideas = useMemo(() => gifts.filter((g) => g.status === 'idea'), [gifts]);
   const done = useMemo(() => gifts.filter((g) => (g.status ?? 'done') === 'done'), [gifts]);

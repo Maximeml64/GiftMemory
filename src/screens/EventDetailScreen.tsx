@@ -5,8 +5,9 @@ import { Alert, Dimensions, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Haptics from 'expo-haptics';
 
-import { RootStackParamList, Occasion } from '../types';
+import { RootStackParamList } from '../types';
 import { useEvents } from '../store/EventsContext';
 import { useGifts } from '../store/GiftsContext';
 import {
@@ -22,6 +23,7 @@ import { COLORS, FONTS, OCCASIONS, RADIUS, SPACING } from '../utils/theme';
 import {
   daysLabel,
   daysUntilNext,
+  eventTypeToOccasion,
   formatEventDate,
   ideasForPerson,
   lastYearGiftForEvent,
@@ -34,11 +36,6 @@ const MONTH_LABELS_SHORT = [
   'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
   'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
 ];
-
-function eventTypeToOccasion(type: 'Anniversaire' | 'Mariage' | 'Naissance' | 'Autre'): Occasion {
-  if (type === 'Anniversaire' || type === 'Mariage' || type === 'Naissance') return type;
-  return 'Autre';
-}
 
 export default function EventDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -82,6 +79,7 @@ export default function EventDetailScreen() {
         text: 'Supprimer',
         style: 'destructive',
         onPress: async () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
           await removeEvent(event!.id);
           navigation.goBack();
         },

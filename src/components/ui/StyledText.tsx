@@ -13,7 +13,6 @@ interface Props extends TextProps {
   variant?: Variant;
   color?: string;
   align?: TextStyle['textAlign'];
-  weight?: 'regular' | 'medium' | 'semibold' | 'bold';
 }
 
 export function StyledText({

@@ -5,7 +5,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   TextInput,
@@ -17,21 +16,27 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useHeaderHeight } from '@react-navigation/elements';
 import * as Crypto from 'expo-crypto';
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { RootStackParamList, CalendarEvent, EventType } from '../types';
 import { useEvents } from '../store/EventsContext';
-import { Button, StyledText } from '../components/ui';
+import {
+  Button,
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  StyledText,
+} from '../components/ui';
 import { COLORS, OCCASIONS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
-import { EVENT_TYPES, REMINDER_OPTIONS, formatEventDate } from '../utils/eventUtils';
+import {
+  EVENT_TYPES,
+  REMINDER_OPTIONS,
+  eventTypeToOccasion,
+  formatEventDate,
+} from '../utils/eventUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'AddEvent'>;
-
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const CheckIcon = Check as unknown as LucideIcon;
-const ChevronLeftIcon = ChevronLeft as unknown as LucideIcon;
-const ChevronRightIcon = ChevronRight as unknown as LucideIcon;
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
@@ -106,9 +111,11 @@ export default function AddEventScreen() {
         createdAt: existing?.createdAt ?? new Date().toISOString(),
       };
       await saveEvent(event);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       navigation.goBack();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       Alert.alert('Erreur', `Impossible de sauvegarder.\n${msg}`);
     } finally {
       setSaving(false);
@@ -118,7 +125,7 @@ export default function AddEventScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         keyboardVerticalOffset={headerHeight}
         style={{ flex: 1 }}
       >
@@ -136,7 +143,7 @@ export default function AddEventScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.xl }}>
             {EVENT_TYPES.map((t) => {
               const active = type === t;
-              const colors = OCCASIONS[t === 'Anniversaire' || t === 'Mariage' || t === 'Naissance' ? t : 'Autre'];
+              const colors = OCCASIONS[eventTypeToOccasion(t)];
               return (
                 <TouchableOpacity
                   key={t}

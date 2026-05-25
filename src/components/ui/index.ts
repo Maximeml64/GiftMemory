@@ -20,3 +20,6 @@ export { EventCountdownCard } from './EventCountdownCard';
 export { GiftCard } from './GiftCard';
 export { GiverRow } from './GiverRow';
 export { OccasionBadge } from './OccasionBadge';
+
+// Icons
+export * from './icons';

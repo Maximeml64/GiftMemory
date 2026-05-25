@@ -5,13 +5,10 @@
 
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { ChevronRight } from 'lucide-react-native';
 import { COLORS, SPACING } from '../../utils/theme';
 import { Avatar } from './Avatar';
+import { ChevronRightIcon } from './icons';
 import { StyledText } from './StyledText';
-
-// lucide-react-native ships with web-leaning types; cast to a minimal RN-compatible signature.
-const ChevronIcon = ChevronRight as unknown as React.ComponentType<{ color?: string; size?: number }>;
 
 interface Props {
   name: string;
@@ -47,7 +44,7 @@ export function GiverRow({ name, giftCount, onPress }: Props) {
         </StyledText>
       </View>
 
-      <ChevronIcon color={COLORS.textTertiary} size={20} />
+      <ChevronRightIcon color={COLORS.textTertiary} size={20} />
     </TouchableOpacity>
   );
 }

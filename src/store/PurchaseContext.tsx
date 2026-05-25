@@ -3,15 +3,13 @@
 import React, {
   createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode,
 } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
 import Constants from 'expo-constants';
 import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 
 const ENTITLEMENT_ID = 'premium';
 
-const API_KEY = Platform.OS === 'ios'
-  ? (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '')
-  : (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '');
+const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '';
 
 const isExpoGo =
   (Constants.appOwnership as string) === 'expo' ||

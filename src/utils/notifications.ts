@@ -32,8 +32,11 @@ Notifications.setNotificationHandler({
 });
 
 export async function requestNotificationPermissions(): Promise<boolean> {
-  const { status: existing } = await Notifications.getPermissionsAsync();
+  const { status: existing, canAskAgain } = await Notifications.getPermissionsAsync();
   if (existing === 'granted') return true;
+  // Avoid re-prompting if the OS already denied and won't ask again —
+  // otherwise we'd silently no-op every save without telling the user.
+  if (existing === 'denied' && canAskAgain === false) return false;
   const { status } = await Notifications.requestPermissionsAsync();
   return status === 'granted';
 }

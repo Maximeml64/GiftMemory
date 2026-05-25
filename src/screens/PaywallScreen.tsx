@@ -6,17 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PurchasesPackage } from 'react-native-purchases';
-import { Check, X } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { RootStackParamList } from '../types';
 import { usePurchase } from '../store/PurchaseContext';
-import { Button, Card, StyledText } from '../components/ui';
+import { Button, Card, CheckIcon, StyledText, XIcon } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-type LucideIcon = React.ComponentType<{ color?: string; size?: number }>;
-const CheckIcon = Check as unknown as LucideIcon;
-const XIcon = X as unknown as LucideIcon;
 
 const FEATURES = [
   'Cadeaux illimités',
@@ -94,7 +91,10 @@ export default function PaywallScreen() {
     setLoading(true);
     const success = await purchasePackage(selectedPkg);
     setLoading(false);
-    if (success) navigation.goBack();
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      navigation.goBack();
+    }
   }
 
   const label = selectedPkg ? packageLabel(selectedPkg) : null;
@@ -186,7 +186,10 @@ export default function PaywallScreen() {
                 <TouchableOpacity
                   key={pkg.identifier}
                   activeOpacity={0.8}
-                  onPress={() => setSelectedPkg(pkg)}
+                  onPress={() => {
+                    Haptics.selectionAsync().catch(() => {});
+                    setSelectedPkg(pkg);
+                  }}
                   style={{
                     flex: 1,
                     minHeight: 110,
