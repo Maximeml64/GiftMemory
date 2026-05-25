@@ -16,7 +16,6 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.maxime.giftmemory",
-      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Pour prendre une photo du cadeau.",
         "NSPhotoLibraryUsageDescription": "Pour choisir une photo depuis la galerie.",
