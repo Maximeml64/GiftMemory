@@ -21,6 +21,7 @@ interface PurchaseContextValue {
   packages: PurchasesPackage[];
   purchasePackage: (pkg: PurchasesPackage) => Promise<boolean>;
   restorePurchases: () => Promise<void>;
+  reloadOfferings: () => Promise<void>;
 }
 
 const PurchaseContext = createContext<PurchaseContextValue | null>(null);
@@ -84,6 +85,21 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Lets the paywall re-fetch offerings after a transient network failure
+  // (initial fetch happens once in the effect above; without this the user
+  // would be stuck on an empty paywall until app restart).
+  const reloadOfferings = useCallback(async () => {
+    if (isExpoGo || !API_KEY) return;
+    try {
+      const offerings = await Purchases.getOfferings();
+      if (offerings.current?.availablePackages) {
+        setPackages(offerings.current.availablePackages);
+      }
+    } catch (e) {
+      console.error('reloadOfferings error:', e);
+    }
+  }, []);
+
   const restorePurchases = useCallback(async () => {
     try {
       const info = await Purchases.restorePurchases();
@@ -99,7 +115,7 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <PurchaseContext.Provider value={{ isLoading, isPremium, packages, purchasePackage, restorePurchases }}>
+    <PurchaseContext.Provider value={{ isLoading, isPremium, packages, purchasePackage, restorePurchases, reloadOfferings }}>
       {children}
     </PurchaseContext.Provider>
   );
