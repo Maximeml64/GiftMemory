@@ -20,41 +20,60 @@ const FEATURES = [
   'Événements et rappels illimités',
   'Photos haute qualité',
   'Donneurs illimités',
-  'Notifications push',
+  'Notifications de remerciement',
   'Accès à toutes les futures fonctionnalités',
 ];
 
-function packageLabel(pkg: PurchasesPackage): {
-  title: string;
-  price: string;
-  badge?: string;
-  savings?: string;
-} {
+type IntroPrice = NonNullable<PurchasesPackage['product']['introPrice']>;
+
+// A free trial is an introductory price of 0. We read it off the product
+// instead of hard-coding "7 days" so the wording always matches whatever is
+// configured in App Store Connect / RevenueCat.
+function getFreeTrial(pkg: PurchasesPackage): IntroPrice | null {
+  const intro = pkg.product.introPrice;
+  return intro && intro.price === 0 ? intro : null;
+}
+
+function trialDuration(intro: IntroPrice): string {
+  const n = intro.periodNumberOfUnits;
+  const units: Record<string, [string, string]> = {
+    DAY: ['jour', 'jours'],
+    WEEK: ['semaine', 'semaines'],
+    MONTH: ['mois', 'mois'],
+    YEAR: ['an', 'ans'],
+  };
+  const [singular, plural] = units[intro.periodUnit] ?? ['jour', 'jours'];
+  return `${n} ${n > 1 ? plural : singular}`;
+}
+
+function packageLabel(pkg: PurchasesPackage): { title: string; price: string } {
   const id = pkg.packageType;
   const price = pkg.product.priceString;
 
-  if (id === 'MONTHLY' || pkg.identifier === '$rc_monthly') {
-    return { title: 'Mensuel', price: `${price} / mois`, badge: '7 jours offerts' };
-  }
   if (id === 'ANNUAL' || pkg.identifier === '$rc_annual') {
-    return { title: 'Annuel', price: `${price} / an`, badge: 'Populaire', savings: 'Économisez 50 %' };
+    return { title: 'Abonnement annuel', price: `${price} / an` };
+  }
+  if (id === 'MONTHLY' || pkg.identifier === '$rc_monthly') {
+    return { title: 'Mensuel', price: `${price} / mois` };
   }
   if (id === 'LIFETIME' || pkg.identifier === '$rc_lifetime') {
-    return { title: 'À vie', price: price, badge: 'Meilleure offre' };
+    return { title: 'Premium à vie', price };
   }
-  return { title: pkg.product.title, price: price };
+  return { title: pkg.product.title, price };
 }
 
 export default function PaywallScreen() {
   const navigation = useNavigation<Nav>();
-  const { packages, purchasePackage, restorePurchases, isPremium } = usePurchase();
+  const { packages, purchasePackage, restorePurchases, reloadOfferings, isLoading, isPremium } = usePurchase();
   const [selectedPkg, setSelectedPkg] = useState<PurchasesPackage | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (packages.length > 0 && !selectedPkg) {
-      const annual = packages.find((p) => p.identifier === '$rc_annual') ?? packages[0];
-      setSelectedPkg(annual);
+      const preferred =
+        packages.find((p) => p.identifier === '$rc_lifetime' || p.packageType === 'LIFETIME') ??
+        packages[0];
+      setSelectedPkg(preferred);
     }
   }, [packages, selectedPkg]);
 
@@ -98,7 +117,9 @@ export default function PaywallScreen() {
   }
 
   const label = selectedPkg ? packageLabel(selectedPkg) : null;
-  const isMonthly = selectedPkg?.identifier === '$rc_monthly';
+  const trial = selectedPkg ? getFreeTrial(selectedPkg) : null;
+  const isLifetime =
+    selectedPkg?.packageType === 'LIFETIME' || selectedPkg?.identifier === '$rc_lifetime';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['top', 'bottom']}>
@@ -124,8 +145,8 @@ export default function PaywallScreen() {
           </StyledText>
         </View>
 
-        {/* Trial banner */}
-        {isMonthly && label ? (
+        {/* Offer banner */}
+        {label && (trial || isLifetime) ? (
           <View
             style={{
               backgroundColor: COLORS.primaryMuted,
@@ -138,7 +159,9 @@ export default function PaywallScreen() {
             }}
           >
             <StyledText variant="bodyMedium" color={COLORS.primary}>
-              ✨ 7 jours gratuits, puis {label.price}
+              {trial
+                ? `✨ ${trialDuration(trial)} gratuits, puis ${label.price}`
+                : `💎 Paiement unique — accès à vie pour ${label.price}`}
             </StyledText>
           </View>
         ) : null}
@@ -175,8 +198,31 @@ export default function PaywallScreen() {
         </Card>
 
         {/* Packages */}
-        {packages.length === 0 ? (
+        {isLoading && packages.length === 0 ? (
           <ActivityIndicator color={COLORS.primary} style={{ marginVertical: SPACING.xl }} />
+        ) : packages.length === 0 ? (
+          <View style={{ alignItems: 'center', gap: SPACING.md, marginVertical: SPACING.xl }}>
+            <StyledText variant="body" align="center" color={COLORS.textSecondary} style={{ maxWidth: 300 }}>
+              Les offres n'ont pas pu être chargées. Vérifiez votre connexion et réessayez.
+            </StyledText>
+            <Button label="Réessayer" variant="secondary" onPress={() => reloadOfferings()} />
+          </View>
+        ) : packages.length === 1 && label ? (
+          <Card padding="base" style={{ marginBottom: SPACING.lg, alignItems: 'center', gap: 4 }}>
+            <StyledText variant="bodyMedium" color={COLORS.primary}>
+              {label.title}
+            </StyledText>
+            <StyledText variant="h2">{label.price}</StyledText>
+            {trial ? (
+              <StyledText variant="caption" color={COLORS.textSecondary} align="center">
+                {trialDuration(trial)} d'essai gratuit, sans engagement
+              </StyledText>
+            ) : isLifetime ? (
+              <StyledText variant="caption" color={COLORS.textSecondary} align="center">
+                Paiement unique, sans abonnement
+              </StyledText>
+            ) : null}
+          </Card>
         ) : (
           <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.lg }}>
             {packages.map((pkg) => {
@@ -203,7 +249,7 @@ export default function PaywallScreen() {
                     ...(selected ? {} : SHADOWS.sm),
                   }}
                 >
-                  {info.badge ? (
+                  {getFreeTrial(pkg) ? (
                     <View
                       style={{
                         backgroundColor: selected ? COLORS.primary : COLORS.surfaceAlt,
@@ -217,7 +263,7 @@ export default function PaywallScreen() {
                         variant="caption"
                         color={selected ? COLORS.textInverse : COLORS.textSecondary}
                       >
-                        {info.badge}
+                        Essai gratuit
                       </StyledText>
                     </View>
                   ) : null}
@@ -236,11 +282,6 @@ export default function PaywallScreen() {
                   >
                     {info.price}
                   </StyledText>
-                  {info.savings ? (
-                    <StyledText variant="caption" color={COLORS.success} align="center" style={{ marginTop: 4 }}>
-                      {info.savings}
-                    </StyledText>
-                  ) : null}
                 </TouchableOpacity>
               );
             })}
@@ -248,7 +289,7 @@ export default function PaywallScreen() {
         )}
 
         <Button
-          label={isMonthly ? "Commencer l'essai gratuit" : 'Choisir cette offre'}
+          label={trial ? "Commencer l'essai gratuit" : isLifetime ? 'Débloquer à vie' : 'Continuer'}
           onPress={handlePurchase}
           loading={loading}
           disabled={!selectedPkg}
@@ -272,7 +313,9 @@ export default function PaywallScreen() {
           color={COLORS.textTertiary}
           style={{ marginTop: SPACING.sm }}
         >
-          L'abonnement se renouvelle automatiquement. Annulable à tout moment depuis les réglages de l'App Store. Sans engagement pour l'offre à vie.
+          {isLifetime
+            ? 'Paiement unique. Accès Premium à vie, sans abonnement ni renouvellement. Achat restaurable à tout moment.'
+            : "L'essai gratuit se transforme en abonnement payant à son terme, sauf annulation au moins 24 h avant la fin. Renouvellement automatique, annulable à tout moment depuis les réglages de l'App Store."}
         </StyledText>
       </ScrollView>
     </SafeAreaView>
