@@ -1,6 +1,6 @@
 // src/screens/GiftDetailScreen.tsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, Linking, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -38,6 +38,21 @@ export default function GiftDetailScreen() {
   const route = useRoute<Route>();
   const { getGiftById, removeGift } = useGifts();
   const gift = getGiftById(route.params.giftId);
+
+  // Hero ratio follows the real photo (clamped) so the full image is shown
+  // without cropping. Default 4:5 until the size resolves.
+  const [heroAspect, setHeroAspect] = useState(0.8);
+  const heroUri = gift?.imageUri ?? null;
+  useEffect(() => {
+    if (!heroUri) return;
+    Image.getSize(
+      heroUri,
+      (w, h) => {
+        if (w > 0 && h > 0) setHeroAspect(Math.min(1.3, Math.max(0.66, w / h)));
+      },
+      () => {},
+    );
+  }, [heroUri]);
 
   if (!gift) {
     return (
@@ -100,12 +115,12 @@ export default function GiftDetailScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Hero */}
-        <View style={{ width: '100%', aspectRatio: 1, backgroundColor: occasion.bg }}>
+        <View style={{ width: '100%', aspectRatio: heroAspect, backgroundColor: occasion.bg }}>
           {gift.imageUri ? (
             <Image
               source={{ uri: gift.imageUri }}
               style={{ width: '100%', height: '100%', opacity: isIdea ? 0.85 : 1 }}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

@@ -275,12 +275,12 @@ export default function AddGiftScreen() {
         return;
       }
     }
+    // No allowsEditing/aspect: keep the photo exactly as framed in the
+    // viewfinder instead of forcing a square crop that cuts portrait subjects.
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 })
+      ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
       : await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect: [1, 1],
           quality: 0.8,
         });
     if (!result.canceled && result.assets[0]) {
@@ -523,7 +523,7 @@ export default function AddGiftScreen() {
             }}
           >
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
             ) : (
               <View
                 style={{

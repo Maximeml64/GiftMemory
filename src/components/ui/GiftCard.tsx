@@ -1,7 +1,7 @@
 // src/components/ui/GiftCard.tsx
 //
 // Carte cadeau format portrait (grille 2-col). Photo héroïsée en haut
-// (carré 1:1, identique au recadrage de capture), nom serif au centre, donneur/destinataire en sous-titre,
+// (tuile 4:5 uniforme, cover), nom serif au centre, donneur/destinataire en sous-titre,
 // badge occasion en bas. Direction (received/given) et statut (idea/done)
 // sont indiqués par des badges discrets.
 
@@ -34,7 +34,7 @@ export function GiftCard({ gift, width, onPress }: Props) {
     ...(isIdea ? { borderWidth: 1, borderColor: COLORS.borderStrong, borderStyle: 'dashed' } : {}),
   };
 
-  const imageHeight = width; // 1:1 — matches the square capture crop so photos aren't re-cropped
+  const imageHeight = Math.round(width * 1.25); // 4:5 portrait tile (grid stays uniform; full photo shown on the detail screen)
 
   return (
     <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={containerStyle}>
