@@ -100,7 +100,7 @@ export default function GiftDetailScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['bottom']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Hero */}
-        <View style={{ width: '100%', aspectRatio: 1.2, backgroundColor: occasion.bg }}>
+        <View style={{ width: '100%', aspectRatio: 1, backgroundColor: occasion.bg }}>
           {gift.imageUri ? (
             <Image
               source={{ uri: gift.imageUri }}
