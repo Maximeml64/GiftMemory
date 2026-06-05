@@ -158,7 +158,7 @@ export default function AddEventScreen() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
-            paddingTop: SPACING.md,
+            paddingTop: SPACING.lg,
             paddingBottom: 80,
           }}
           keyboardShouldPersistTaps="handled"
@@ -357,7 +357,7 @@ export default function AddEventScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
+                  gap: SPACING.xs,
                   backgroundColor: COLORS.surface,
                   borderRadius: RADIUS.md,
                   paddingHorizontal: SPACING.md,
