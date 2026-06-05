@@ -31,6 +31,7 @@ import {
   deleteImageLocally,
   saveAdditionalPhoto,
   saveImageLocally,
+  saveReceiptImage,
 } from '../utils/storage';
 import OccasionPicker from '../components/OccasionPicker';
 import DatePickerField from '../components/DatePickerField';
@@ -127,104 +128,6 @@ function SegmentedPill<T extends string>({
   );
 }
 
-function TagsInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) => void }) {
-  const [draft, setDraft] = useState('');
-
-  function addTag(raw: string) {
-    const clean = raw.trim().replace(/^#/, '');
-    if (!clean) return;
-    if (tags.some((t) => t.toLowerCase() === clean.toLowerCase())) {
-      setDraft('');
-      return;
-    }
-    onChange([...tags, clean]);
-    setDraft('');
-  }
-
-  function removeTag(t: string) {
-    onChange(tags.filter((x) => x !== t));
-  }
-
-  return (
-    <View>
-      <View
-        style={{
-          ...fieldInputStyle,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: SPACING.sm,
-        }}
-      >
-        <TextInput
-          style={{
-            flex: 1,
-            fontFamily: 'Inter_400Regular',
-            fontSize: 15,
-            lineHeight: 22,
-            color: COLORS.text,
-            paddingVertical: 6,
-          }}
-          value={draft}
-          onChangeText={(text) => {
-            // Comma also acts as enter for adding a tag.
-            if (text.endsWith(',')) {
-              addTag(text.slice(0, -1));
-            } else {
-              setDraft(text);
-            }
-          }}
-          placeholder="Ajouter une étiquette puis Entrée"
-          placeholderTextColor={COLORS.textTertiary}
-          onSubmitEditing={() => addTag(draft)}
-          returnKeyType="done"
-          blurOnSubmit={false}
-          maxLength={24}
-        />
-        <TouchableOpacity
-          onPress={() => addTag(draft)}
-          disabled={!draft.trim()}
-          hitSlop={8}
-          style={{ opacity: draft.trim() ? 1 : 0.3, paddingHorizontal: SPACING.xs }}
-        >
-          <PlusIcon color={COLORS.primary} size={20} />
-        </TouchableOpacity>
-      </View>
-      {tags.length > 0 ? (
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: SPACING.xs,
-            marginTop: SPACING.sm,
-          }}
-        >
-          {tags.map((tag) => (
-            <View
-              key={tag}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: SPACING.xs,
-                paddingVertical: 4,
-                paddingHorizontal: SPACING.sm,
-                backgroundColor: COLORS.primaryMuted,
-                borderRadius: RADIUS.full,
-              }}
-            >
-              <StyledText variant="smallMedium" color={COLORS.primary}>
-                {tag}
-              </StyledText>
-              <TouchableOpacity onPress={() => removeTag(tag)} hitSlop={6}>
-                <XIcon color={COLORS.primary} size={12} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
 export default function AddGiftScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -252,10 +155,11 @@ export default function AddGiftScreen() {
   // Tracks photos newly picked this session that still live at their picker URI
   // and need to be copied into the gift_images dir on save.
   const [stagedAdditionalPhotos, setStagedAdditionalPhotos] = useState<string[]>([]);
+  const [receiptUri, setReceiptUri] = useState<string | null>(existing?.receiptUri ?? null);
+  const [newReceiptUri, setNewReceiptUri] = useState<string | null>(null);
   const [price, setPrice] = useState(
     existing?.price !== undefined ? existing.price.toString().replace('.', ',') : ''
   );
-  const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
   const [purchaseLocation, setPurchaseLocation] = useState(existing?.purchaseLocation ?? '');
   const [purchaseUrl, setPurchaseUrl] = useState(existing?.purchaseUrl ?? '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
@@ -303,6 +207,40 @@ export default function AddGiftScreen() {
     }
     options.push({ text: 'Annuler', style: 'cancel' });
     Alert.alert('Photo', 'Choisir la source', options);
+  }
+
+  async function pickReceipt(fromCamera: boolean) {
+    if (fromCamera) {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (perm.status !== 'granted') {
+        Alert.alert('Permission refusée', "L'accès à la caméra est nécessaire.");
+        return;
+      }
+    }
+    // No crop: a receipt is tall and the whole thing must stay readable.
+    const result = fromCamera
+      ? await ImagePicker.launchCameraAsync({ quality: 0.85 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
+    if (!result.canceled && result.assets[0]) {
+      setReceiptUri(result.assets[0].uri);
+      setNewReceiptUri(result.assets[0].uri);
+    }
+  }
+
+  function showReceiptOptions() {
+    const options: Array<{ text: string; onPress?: () => void; style?: 'destructive' | 'cancel' }> = [
+      { text: 'Caméra', onPress: () => pickReceipt(true) },
+      { text: 'Galerie', onPress: () => pickReceipt(false) },
+    ];
+    if (receiptUri) {
+      options.push({
+        text: 'Supprimer le ticket',
+        style: 'destructive',
+        onPress: () => { setReceiptUri(null); setNewReceiptUri(null); },
+      });
+    }
+    options.push({ text: 'Annuler', style: 'cancel' });
+    Alert.alert('Ticket de caisse', 'Choisir la source', options);
   }
 
   async function addAdditionalPhoto() {
@@ -363,6 +301,15 @@ export default function AddGiftScreen() {
         await deleteImageLocally(existing.imageUri);
       }
 
+      // Receipt handling (same lifecycle as the main photo)
+      let finalReceiptUri = receiptUri;
+      if (newReceiptUri) {
+        finalReceiptUri = await saveReceiptImage(newReceiptUri, id);
+      }
+      if (isEditing && existing?.receiptUri && receiptUri === null && !newReceiptUri) {
+        await deleteImageLocally(existing.receiptUri);
+      }
+
       // Additional photos: copy any staged URIs into permanent storage,
       // and delete any previously-saved URIs that the user removed.
       const previousAdditional = existing?.additionalPhotos ?? [];
@@ -395,8 +342,8 @@ export default function AddGiftScreen() {
         date,
         imageUri: finalImageUri,
         additionalPhotos: persistedAdditional.length > 0 ? persistedAdditional : undefined,
+        receiptUri: finalReceiptUri || undefined,
         price: parsedPrice,
-        tags: tags.length > 0 ? tags : undefined,
         purchaseLocation: purchaseLocation.trim() || undefined,
         purchaseUrl: purchaseUrl.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -626,6 +573,69 @@ export default function AddGiftScreen() {
             </ScrollView>
           </View>
 
+          {/* Ticket de caisse */}
+          <View style={{ marginBottom: SPACING.xxl }}>
+            <StyledText
+              variant="caption"
+              color={COLORS.textTertiary}
+              align="center"
+              style={{ marginBottom: SPACING.sm }}
+            >
+              Ticket de caisse (échange / retour / garantie)
+            </StyledText>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={showReceiptOptions}
+              style={{ alignSelf: 'center' }}
+            >
+              {receiptUri ? (
+                <View style={{ position: 'relative' }}>
+                  <Image
+                    source={{ uri: receiptUri }}
+                    style={{ width: 120, height: 160, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceAlt }}
+                    resizeMode="cover"
+                  />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: SPACING.xs,
+                      right: SPACING.xs,
+                      width: 32,
+                      height: 32,
+                      borderRadius: RADIUS.full,
+                      backgroundColor: COLORS.surface,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      ...SHADOWS.sm,
+                    }}
+                  >
+                    <PencilIcon color={COLORS.primary} size={15} />
+                  </View>
+                </View>
+              ) : (
+                <View
+                  style={{
+                    width: 120,
+                    height: 160,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: COLORS.surfaceAlt,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    borderStyle: 'dashed',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: SPACING.xs,
+                  }}
+                >
+                  <StyledText style={{ fontSize: 30, lineHeight: 36 }}>🧾</StyledText>
+                  <StyledText variant="smallMedium" color={COLORS.textSecondary}>
+                    Ajouter
+                  </StyledText>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
           {/* Form */}
           <View style={{ gap: SPACING.lg }}>
             <View>
@@ -717,11 +727,6 @@ export default function AddGiftScreen() {
                 keyboardType="decimal-pad"
                 maxLength={10}
               />
-            </View>
-
-            <View>
-              <FieldLabel optional>Étiquettes</FieldLabel>
-              <TagsInput tags={tags} onChange={setTags} />
             </View>
 
             <View>

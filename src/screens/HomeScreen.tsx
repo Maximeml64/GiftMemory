@@ -28,7 +28,7 @@ import {
   UsersIcon,
 } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
-import { daysUntilNext, ideasForPerson, lastYearGiftForEvent, sortEventsByNext } from '../utils/eventUtils';
+import { daysUntilEvent, ideasForPerson, lastYearGiftForEvent, sortEventsByNext } from '../utils/eventUtils';
 
 type Nav = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -358,7 +358,7 @@ export default function HomeScreen() {
                   <EventCountdownCard
                     key={event.id}
                     event={event}
-                    daysUntil={daysUntilNext(event.month, event.day)}
+                    daysUntil={daysUntilEvent(event)}
                     ideaCount={ideas.length || undefined}
                     lastYearGiftName={lastYear?.name}
                     onPress={() =>

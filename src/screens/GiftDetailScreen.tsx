@@ -1,7 +1,7 @@
 // src/screens/GiftDetailScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Linking, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -42,6 +42,7 @@ export default function GiftDetailScreen() {
   // Hero ratio follows the real photo (clamped) so the full image is shown
   // without cropping. Default 4:5 until the size resolves.
   const [heroAspect, setHeroAspect] = useState(0.8);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const heroUri = gift?.imageUri ?? null;
   useEffect(() => {
     if (!heroUri) return;
@@ -270,34 +271,6 @@ export default function GiftDetailScreen() {
             </View>
           </Card>
 
-          {/* Tags */}
-          {gift.tags && gift.tags.length > 0 ? (
-            <View style={{ marginBottom: SPACING.lg }}>
-              <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm }}>
-                Étiquettes
-              </StyledText>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs }}>
-                {gift.tags.map((tag) => (
-                  <View
-                    key={tag}
-                    style={{
-                      paddingVertical: 4,
-                      paddingHorizontal: SPACING.sm,
-                      backgroundColor: COLORS.surfaceAlt,
-                      borderRadius: RADIUS.full,
-                      borderWidth: 1,
-                      borderColor: COLORS.border,
-                    }}
-                  >
-                    <StyledText variant="smallMedium" color={COLORS.textSecondary}>
-                      {tag}
-                    </StyledText>
-                  </View>
-                ))}
-              </View>
-            </View>
-          ) : null}
-
           {/* Notes */}
           {gift.notes ? (
             <View style={{ marginBottom: SPACING.lg }}>
@@ -307,6 +280,32 @@ export default function GiftDetailScreen() {
               <Card padding="base">
                 <StyledText variant="body">{gift.notes}</StyledText>
               </Card>
+            </View>
+          ) : null}
+
+          {/* Ticket de caisse */}
+          {gift.receiptUri ? (
+            <View style={{ marginBottom: SPACING.lg }}>
+              <StyledText variant="eyebrow" style={{ marginBottom: SPACING.sm }}>
+                Ticket de caisse
+              </StyledText>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setReceiptOpen(true)}>
+                <Image
+                  source={{ uri: gift.receiptUri }}
+                  style={{
+                    width: 130,
+                    height: 175,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: COLORS.surfaceAlt,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                  }}
+                  resizeMode="cover"
+                />
+                <StyledText variant="caption" color={COLORS.textTertiary} style={{ marginTop: SPACING.xs }}>
+                  Toucher pour agrandir
+                </StyledText>
+              </TouchableOpacity>
             </View>
           ) : null}
 
@@ -329,6 +328,29 @@ export default function GiftDetailScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Receipt lightbox */}
+      <Modal visible={receiptOpen} transparent animationType="fade" onRequestClose={() => setReceiptOpen(false)}>
+        <Pressable
+          onPress={() => setReceiptOpen(false)}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {gift.receiptUri ? (
+            <Image
+              source={{ uri: gift.receiptUri }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
+            />
+          ) : null}
+          <StyledText
+            variant="caption"
+            color={COLORS.textInverse}
+            style={{ position: 'absolute', bottom: 50 }}
+          >
+            Toucher pour fermer
+          </StyledText>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -29,7 +29,7 @@ export function EventCountdownCard({ event, daysUntil, onPress, ideaCount, lastY
   const occasion = OCCASIONS[eventTypeToOccasion(event.type)] ?? OCCASIONS.Autre;
   const isToday = daysUntil === 0;
   const isPast = daysUntil < 0;
-  const dateLabel = `${event.day} ${MONTH_LABELS[event.month - 1]}`;
+  const dateLabel = `${event.day} ${MONTH_LABELS[event.month - 1]}${event.year != null ? ` ${event.year}` : ''}`;
 
   const countdownLabel = isToday
     ? "aujourd'hui"
