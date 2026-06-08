@@ -140,7 +140,9 @@ function App() {
   });
 
   useEffect(() => {
-    hasSeenOnboarding().then(setOnboardingDone);
+    hasSeenOnboarding()
+      .then(setOnboardingDone)
+      .catch(() => setOnboardingDone(false));
   }, []);
 
   // Loading state while loading fonts or checking AsyncStorage

@@ -1,7 +1,7 @@
 // src/screens/PaywallScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,6 +14,9 @@ import { Button, Card, CheckIcon, StyledText, XIcon } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+const PRIVACY_POLICY_URL = 'https://momentous-locket-2af.notion.site/Politique-de-Confidentialit-GiftMemory-35684071bf3e803fafecdc548d553ef5';
+const CGU_URL = 'https://momentous-locket-2af.notion.site/Conditions-G-n-rales-d-Utilisation-GiftMemory-35684071bf3e80288fd1f4947a1928d2';
 
 const FEATURES = [
   'Cadeaux illimités',
@@ -317,6 +320,34 @@ export default function PaywallScreen() {
             ? 'Paiement unique. Accès Premium à vie, sans abonnement ni renouvellement. Achat restaurable à tout moment.'
             : "L'essai gratuit se transforme en abonnement payant à son terme, sauf annulation au moins 24 h avant la fin. Renouvellement automatique, annulable à tout moment depuis les réglages de l'App Store."}
         </StyledText>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: SPACING.lg,
+            marginTop: SPACING.md,
+          }}
+        >
+          <TouchableOpacity onPress={() => Linking.openURL(CGU_URL)} activeOpacity={0.7}>
+            <StyledText
+              variant="caption"
+              color={COLORS.textSecondary}
+              style={{ textDecorationLine: 'underline' }}
+            >
+              Conditions d'utilisation
+            </StyledText>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} activeOpacity={0.7}>
+            <StyledText
+              variant="caption"
+              color={COLORS.textSecondary}
+              style={{ textDecorationLine: 'underline' }}
+            >
+              Politique de confidentialité
+            </StyledText>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
