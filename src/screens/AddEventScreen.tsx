@@ -33,6 +33,8 @@ import {
   REMINDER_OPTIONS,
   eventTypeToOccasion,
   formatEventDate,
+  formatTime,
+  reminderLabel,
 } from '../utils/eventUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -83,11 +85,20 @@ export default function AddEventScreen() {
   const [type, setType] = useState<EventType>(existing?.type ?? 'Anniversaire');
   const [month, setMonth] = useState(existing?.month ?? new Date().getMonth() + 1);
   const [day, setDay] = useState(existing?.day ?? new Date().getDate());
+  const [weddingYear, setWeddingYear] = useState(
+    existing?.year != null ? String(existing.year) : '',
+  );
+  const [birthYear, setBirthYear] = useState(
+    existing?.birthYear != null ? String(existing.birthYear) : '',
+  );
   const [reminderDays, setReminderDays] = useState(existing?.reminderDays ?? 7);
+  const [reminderHour, setReminderHour] = useState(existing?.reminderHour ?? 9);
+  const [reminderMinute, setReminderMinute] = useState(existing?.reminderMinute ?? 0);
   const [giftGiven, setGiftGiven] = useState(existing?.giftGiven ?? '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const maxDay = daysInMonth(month);
   const safeDay = Math.min(day, maxDay);
@@ -97,6 +108,9 @@ export default function AddEventScreen() {
       Alert.alert('Champ requis', 'Entrez un nom.');
       return;
     }
+    const wy = parseInt(weddingYear, 10);
+    const by = parseInt(birthYear, 10);
+    const thisYear = new Date().getFullYear();
     setSaving(true);
     try {
       const event: CalendarEvent = {
@@ -105,7 +119,19 @@ export default function AddEventScreen() {
         type,
         month,
         day: safeDay,
+        // Mariage = événement ponctuel daté (année requise pour viser la bonne année).
+        year:
+          type === 'Mariage' && Number.isInteger(wy) && wy >= thisYear && wy <= thisYear + 20
+            ? wy
+            : undefined,
+        // Anniversaire = âge optionnel.
+        birthYear:
+          type === 'Anniversaire' && Number.isInteger(by) && by >= 1900 && by <= thisYear
+            ? by
+            : undefined,
         reminderDays,
+        reminderHour,
+        reminderMinute,
         giftGiven: giftGiven.trim() || undefined,
         notes: notes.trim() || undefined,
         createdAt: existing?.createdAt ?? new Date().toISOString(),
@@ -132,7 +158,7 @@ export default function AddEventScreen() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
-            paddingTop: SPACING.md,
+            paddingTop: SPACING.lg,
             paddingBottom: 80,
           }}
           keyboardShouldPersistTaps="handled"
@@ -189,7 +215,7 @@ export default function AddEventScreen() {
 
             {/* Date */}
             <View>
-              <FieldLabel>Date (jour et mois)</FieldLabel>
+              <FieldLabel>{type === 'Mariage' ? 'Date du mariage' : 'Date (jour et mois)'}</FieldLabel>
               <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
                 {/* Day stepper */}
                 <View
@@ -250,13 +276,52 @@ export default function AddEventScreen() {
                 style={{ marginTop: SPACING.xs, marginLeft: 2 }}
               >
                 → {formatEventDate(month, safeDay)}
+                {type === 'Mariage' && weddingYear ? ` ${weddingYear}` : ''}
               </StyledText>
             </View>
 
+            {/* Année — mariage (date ponctuelle) */}
+            {type === 'Mariage' ? (
+              <View>
+                <FieldLabel>Année</FieldLabel>
+                <TextInput
+                  style={fieldInputStyle}
+                  value={weddingYear}
+                  onChangeText={(t) => setWeddingYear(t.replace(/[^0-9]/g, '').slice(0, 4))}
+                  placeholder={`Ex: ${new Date().getFullYear() + 1}`}
+                  placeholderTextColor={COLORS.textTertiary}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
+                <StyledText variant="caption" color={COLORS.textTertiary} style={{ marginTop: SPACING.xs, marginLeft: 2 }}>
+                  Le mariage peut être à plus d'un an.
+                </StyledText>
+              </View>
+            ) : null}
+
+            {/* Année de naissance — anniversaire (âge) */}
+            {type === 'Anniversaire' ? (
+              <View>
+                <FieldLabel optional>Année de naissance</FieldLabel>
+                <TextInput
+                  style={fieldInputStyle}
+                  value={birthYear}
+                  onChangeText={(t) => setBirthYear(t.replace(/[^0-9]/g, '').slice(0, 4))}
+                  placeholder="Ex: 1990"
+                  placeholderTextColor={COLORS.textTertiary}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
+                <StyledText variant="caption" color={COLORS.textTertiary} style={{ marginTop: SPACING.xs, marginLeft: 2 }}>
+                  Pour afficher l'âge. Laisser vide si inconnu.
+                </StyledText>
+              </View>
+            ) : null}
+
             {/* Rappel */}
             <View>
-              <FieldLabel>Rappel avant l'événement</FieldLabel>
-              <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
+              <FieldLabel>Rappel</FieldLabel>
+              <View style={{ flexDirection: 'row', gap: SPACING.xs }}>
                 {REMINDER_OPTIONS.map((d) => {
                   const active = reminderDays === d;
                   return (
@@ -275,15 +340,40 @@ export default function AddEventScreen() {
                       }}
                     >
                       <StyledText
-                        variant="bodyMedium"
+                        variant="smallMedium"
                         color={active ? COLORS.textInverse : COLORS.textSecondary}
                       >
-                        {d}j
+                        {reminderLabel(d)}
                       </StyledText>
                     </TouchableOpacity>
                   );
                 })}
               </View>
+
+              {/* Heure du rappel */}
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={() => setShowTimePicker(true)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: SPACING.xs,
+                  backgroundColor: COLORS.surface,
+                  borderRadius: RADIUS.md,
+                  paddingHorizontal: SPACING.md,
+                  paddingVertical: 14,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                  marginTop: SPACING.sm,
+                }}
+              >
+                <StyledText variant="body" color={COLORS.textSecondary}>
+                  {reminderDays === 0 ? 'Notifié le jour J à' : 'Notifié à'}
+                </StyledText>
+                <StyledText variant="bodyMedium" color={COLORS.primary}>
+                  {formatTime(reminderHour, reminderMinute)}
+                </StyledText>
+              </TouchableOpacity>
             </View>
 
             {/* Cadeau */}
@@ -377,6 +467,94 @@ export default function AddEventScreen() {
               );
             })}
           </View>
+        </Pressable>
+      </Modal>
+
+      {/* Time modal */}
+      <Modal
+        visible={showTimePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <Pressable
+          onPress={() => setShowTimePicker(false)}
+          style={{ flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: COLORS.surface,
+              borderTopLeftRadius: RADIUS.xxl,
+              borderTopRightRadius: RADIUS.xxl,
+              padding: SPACING.lg,
+              paddingBottom: 40,
+              ...SHADOWS.xl,
+            }}
+          >
+            <StyledText variant="h3" align="center" style={{ marginBottom: SPACING.md }}>
+              Heure du rappel
+            </StyledText>
+
+            <View style={{ flexDirection: 'row', height: 200, gap: SPACING.md }}>
+              {/* Hours */}
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                {Array.from({ length: 24 }, (_, h) => {
+                  const selected = reminderHour === h;
+                  return (
+                    <TouchableOpacity
+                      key={h}
+                      activeOpacity={0.7}
+                      onPress={() => setReminderHour(h)}
+                      style={{
+                        paddingVertical: SPACING.sm + 2,
+                        borderRadius: RADIUS.md,
+                        backgroundColor: selected ? COLORS.primaryMuted : 'transparent',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <StyledText
+                        variant={selected ? 'bodyMedium' : 'body'}
+                        color={selected ? COLORS.primary : COLORS.text}
+                      >
+                        {h.toString().padStart(2, '0')} h
+                      </StyledText>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+              {/* Minutes (pas de 5) */}
+              <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => {
+                  const selected = reminderMinute === m;
+                  return (
+                    <TouchableOpacity
+                      key={m}
+                      activeOpacity={0.7}
+                      onPress={() => setReminderMinute(m)}
+                      style={{
+                        paddingVertical: SPACING.sm + 2,
+                        borderRadius: RADIUS.md,
+                        backgroundColor: selected ? COLORS.primaryMuted : 'transparent',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <StyledText
+                        variant={selected ? 'bodyMedium' : 'body'}
+                        color={selected ? COLORS.primary : COLORS.text}
+                      >
+                        {m.toString().padStart(2, '0')} min
+                      </StyledText>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            <View style={{ marginTop: SPACING.lg }}>
+              <Button label="Confirmer" onPress={() => setShowTimePicker(false)} fullWidth />
+            </View>
+          </Pressable>
         </Pressable>
       </Modal>
     </SafeAreaView>

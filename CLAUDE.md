@@ -7,7 +7,7 @@
 - **Routing** : React Navigation (pas expo-router)
 - **State** : React Context (pas Zustand)
 - **Premium** : RevenueCat
-- **Bundle ID** : `com.maxime.giftmemory`
+- **Bundle ID** : `com.maximeml.giftmemory`
 
 ## Règles de modification
 

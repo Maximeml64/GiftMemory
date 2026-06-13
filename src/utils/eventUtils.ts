@@ -8,10 +8,10 @@ export function samePerson(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
-// EventType -> Occasion mapping. EventType is a subset of Occasion ('Noël'
-// is the only Occasion-only value), so non-matching values collapse to 'Autre'.
+// EventType -> Occasion mapping. EventType is a subset of Occasion, so
+// non-matching values collapse to 'Autre'.
 export function eventTypeToOccasion(type: EventType): Occasion {
-  if (type === 'Anniversaire' || type === 'Mariage' || type === 'Naissance') {
+  if (type === 'Anniversaire' || type === 'Mariage') {
     return type;
   }
   return 'Autre';
@@ -74,15 +74,57 @@ export function nextOccurrence(month: number, day: number): Date {
   return next;
 }
 
+// Target date of an event. With `year` it's a one-off on that exact date
+// (e.g. a wedding, possibly >1 year out) — no yearly roll. Without `year`
+// it recurs every year (e.g. a birthday).
+export function eventTargetDate(event: CalendarEvent): Date {
+  if (event.year != null) {
+    const d = new Date(event.year, event.month - 1, event.day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  return nextOccurrence(event.month, event.day);
+}
+
+export function daysUntilEvent(event: CalendarEvent): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((eventTargetDate(event).getTime() - today.getTime()) / 86_400_000);
+}
+
+// Age the person reaches at the event's target date (Anniversaire only).
+export function ageAtNextBirthday(event: CalendarEvent): number | null {
+  if (event.birthYear == null) return null;
+  const age = eventTargetDate(event).getFullYear() - event.birthYear;
+  return age >= 0 ? age : null;
+}
+
 export function formatEventDate(month: number, day: number): string {
   return new Date(2000, month - 1, day).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
 }
 
+// Like formatEventDate but includes the year for one-off events.
+export function formatEventDateFull(event: CalendarEvent): string {
+  const d = new Date(event.year ?? 2000, event.month - 1, event.day);
+  return d.toLocaleDateString(
+    'fr-FR',
+    event.year != null
+      ? { day: 'numeric', month: 'long', year: 'numeric' }
+      : { day: 'numeric', month: 'long' },
+  );
+}
+
 export function sortEventsByNext(events: CalendarEvent[]): CalendarEvent[] {
-  return [...events].sort((a, b) => daysUntilNext(a.month, a.day) - daysUntilNext(b.month, b.day));
+  // Past one-off events (negative days) sink below all upcoming ones.
+  const key = (e: CalendarEvent) => {
+    const d = daysUntilEvent(e);
+    return d >= 0 ? d : 1_000_000 - d;
+  };
+  return [...events].sort((a, b) => key(a) - key(b));
 }
 
 export function daysLabel(days: number): string {
+  if (days < 0) return 'Passé';
   if (days === 0) return "Aujourd'hui ! 🎉";
   if (days === 1) return 'Demain';
   if (days <= 30) return `Dans ${days} jours`;
@@ -91,13 +133,23 @@ export function daysLabel(days: number): string {
   return `Dans ${Math.round(days / 30)} mois`;
 }
 
-export const EVENT_TYPES = ['Anniversaire', 'Mariage', 'Naissance', 'Autre'] as const;
+export const EVENT_TYPES = ['Anniversaire', 'Mariage', 'Autre'] as const;
 
 export const EVENT_TYPE_CONFIG: Record<string, { emoji: string; color: string }> = {
   Anniversaire: { emoji: '🎂', color: '#E8734A' },
   Mariage: { emoji: '💍', color: '#C48BCE' },
-  Naissance: { emoji: '👶', color: '#7B9FE8' },
   Autre: { emoji: '🎉', color: '#F2C94C' },
 };
 
-export const REMINDER_OPTIONS = [1, 3, 7, 14];
+export const REMINDER_OPTIONS = [0, 1, 3, 7, 14];
+
+// Short label for the reminder chips (0 = day of the event).
+export function reminderLabel(days: number): string {
+  return days === 0 ? 'Jour J' : `${days}j`;
+}
+
+// "9:0" -> "09:00"
+export function formatTime(hour: number, minute: number): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(hour)}:${pad(minute)}`;
+}

@@ -3,7 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { CalendarEvent, Gift } from '../types';
-import { nextOccurrence, EVENT_TYPE_CONFIG } from './eventUtils';
+import { eventTargetDate, EVENT_TYPE_CONFIG } from './eventUtils';
 
 const THANK_YOU_ENABLED_KEY = '@gift_memory_thank_you_enabled';
 
@@ -51,46 +51,40 @@ export async function scheduleEventNotifications(event: CalendarEvent): Promise<
   const granted = await requestNotificationPermissions();
   if (!granted) return;
 
-  const config = EVENT_TYPE_CONFIG[event.type];
-  const next = nextOccurrence(event.month, event.day);
+  const emoji = EVENT_TYPE_CONFIG[event.type]?.emoji ?? '🎉';
+  const target = eventTargetDate(event);
   const now = new Date();
+  // Default 09:00 for events created before the time-of-reminder feature.
+  const hour = event.reminderHour ?? 9;
+  const minute = event.reminderMinute ?? 0;
 
-  const triggerDate = new Date(next);
+  // Single reminder: reminderDays before the event (0 = the day itself) at the
+  // chosen time.
+  const triggerDate = new Date(target);
   triggerDate.setDate(triggerDate.getDate() - event.reminderDays);
-  triggerDate.setHours(9, 0, 0, 0);
-  if (triggerDate <= now) triggerDate.setFullYear(triggerDate.getFullYear() + 1);
+  triggerDate.setHours(hour, minute, 0, 0);
+  if (triggerDate <= now) {
+    // One-off events (a fixed year) don't recur — if the reminder window has
+    // passed, there's nothing to schedule. Recurring events roll to next year.
+    if (event.year != null) return;
+    triggerDate.setFullYear(triggerDate.getFullYear() + 1);
+  }
 
-  const daysText = event.reminderDays === 1 ? 'demain' : `dans ${event.reminderDays} jours`;
+  const isDayOf = event.reminderDays === 0;
+  const giftSuffix = event.giftGiven ? ` Cadeau prévu : ${event.giftGiven}` : '';
+  const title = `${emoji} ${event.personName}${isDayOf ? ` — ${event.type}` : ''}`;
+  const body = isDayOf
+    ? `C'est aujourd'hui ! 🎉${giftSuffix}`
+    : `${event.type} de ${event.personName} ${event.reminderDays === 1 ? 'demain' : `dans ${event.reminderDays} jours`} !${giftSuffix}`;
 
   await Notifications.scheduleNotificationAsync({
     identifier: `event_${event.id}_reminder`,
-    content: {
-      title: `${config.emoji} ${event.personName}`,
-      body: `${event.type} de ${event.personName} ${daysText} !${event.giftGiven ? ` Cadeau prévu : ${event.giftGiven}` : ''}`,
-      data: { eventId: event.id },
-    },
+    content: { title, body, data: { eventId: event.id } },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: triggerDate,
     },
   });
-
-  const dayTrigger = new Date(next);
-  dayTrigger.setHours(9, 0, 0, 0);
-  if (dayTrigger > now) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: `event_${event.id}_today`,
-      content: {
-        title: `${config.emoji} ${event.personName} — ${event.type}`,
-        body: `C'est aujourd'hui ! 🎉${event.giftGiven ? ` Cadeau prévu : ${event.giftGiven}` : ''}`,
-        data: { eventId: event.id },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: dayTrigger,
-      },
-    });
-  }
 }
 
 // ─── Thank-you reminders ──────────────────────────────────────────────────────

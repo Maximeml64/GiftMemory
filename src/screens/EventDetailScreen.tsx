@@ -21,10 +21,12 @@ import {
 } from '../components/ui';
 import { COLORS, FONTS, OCCASIONS, RADIUS, SPACING } from '../utils/theme';
 import {
+  ageAtNextBirthday,
   daysLabel,
-  daysUntilNext,
+  daysUntilEvent,
   eventTypeToOccasion,
-  formatEventDate,
+  formatEventDateFull,
+  formatTime,
   ideasForPerson,
   lastYearGiftForEvent,
 } from '../utils/eventUtils';
@@ -69,7 +71,8 @@ export default function EventDetailScreen() {
   }
 
   const occ = OCCASIONS[eventTypeToOccasion(event.type)] ?? OCCASIONS.Autre;
-  const days = daysUntilNext(event.month, event.day);
+  const days = daysUntilEvent(event);
+  const age = ageAtNextBirthday(event);
   const isToday = days === 0;
 
   function confirmDelete() {
@@ -159,10 +162,17 @@ export default function EventDetailScreen() {
           {/* Meta card */}
           <Card padding="none" style={{ overflow: 'hidden', marginBottom: SPACING.lg }}>
             <View style={{ paddingHorizontal: SPACING.base }}>
-              <InfoRow label="Date" value={formatEventDate(event.month, event.day)} />
+              <InfoRow label="Date" value={formatEventDateFull(event)} />
+              {age !== null ? (
+                <InfoRow label="Âge" value={days < 0 ? `${age} ans` : `Va avoir ${age} ans`} />
+              ) : null}
               <InfoRow
                 label="Rappel"
-                value={`${event.reminderDays} jour${event.reminderDays > 1 ? 's' : ''} avant`}
+                value={`${
+                  event.reminderDays === 0
+                    ? 'Le jour J'
+                    : `${event.reminderDays} jour${event.reminderDays > 1 ? 's' : ''} avant`
+                } · ${formatTime(event.reminderHour ?? 9, event.reminderMinute ?? 0)}`}
                 divider={!!(event.giftGiven || event.notes)}
               />
               {event.giftGiven ? (

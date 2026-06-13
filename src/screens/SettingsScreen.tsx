@@ -82,7 +82,7 @@ export default function SettingsScreen() {
   }
 
   async function openMail() {
-    const url = 'mailto:m.maurylaribiere@gmail.com?subject=GiftMemory%20-%20Question%20%2F%20Probl%C3%A8me';
+    const url = 'mailto:contact@mdlnlab.com?subject=GiftMemory%20-%20Question%20%2F%20Probl%C3%A8me';
     const supported = await Linking.canOpenURL(url);
     if (supported) {
       await Linking.openURL(url);
@@ -222,7 +222,7 @@ export default function SettingsScreen() {
         <SettingsRow
           icon={<MailIcon color={COLORS.textSecondary} size={20} />}
           label="Nous contacter"
-          sublabel="m.maurylaribiere@gmail.com"
+          sublabel="contact@mdlnlab.com"
           onPress={openMail}
         />
       </Card>

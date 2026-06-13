@@ -39,6 +39,22 @@ export async function saveImageLocally(sourceUri: string, giftId: string): Promi
   return destUri;
 }
 
+// Receipts carry small text, so keep them larger / less compressed than card
+// photos to stay legible for an exchange or return. Deterministic name so a
+// re-pick overwrites the previous receipt.
+export async function saveReceiptImage(sourceUri: string, giftId: string): Promise<string> {
+  await ensureImagesDir();
+  const destUri = `${IMAGES_DIR}${giftId}_receipt.jpg`;
+  await deleteImageLocally(destUri);
+  const manipulated = await ImageManipulator.manipulateAsync(
+    sourceUri,
+    [{ resize: { width: 2000 } }],
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+  );
+  await FileSystem.copyAsync({ from: manipulated.uri, to: destUri });
+  return destUri;
+}
+
 export async function deleteImageLocally(imageUri: string): Promise<void> {
   try {
     const info = await FileSystem.getInfoAsync(imageUri);
@@ -131,6 +147,9 @@ export async function deleteGift(giftId: string): Promise<Gift[]> {
   }
   if (gift?.additionalPhotos?.length) {
     await Promise.all(gift.additionalPhotos.map((uri) => deleteImageLocally(uri)));
+  }
+  if (gift?.receiptUri) {
+    await deleteImageLocally(gift.receiptUri);
   }
   const updated = gifts.filter((g) => g.id !== giftId);
   await saveGifts(updated);

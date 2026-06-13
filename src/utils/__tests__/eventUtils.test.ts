@@ -33,7 +33,6 @@ describe('eventTypeToOccasion', () => {
   it('maps shared types 1:1', () => {
     expect(eventTypeToOccasion('Anniversaire')).toBe('Anniversaire');
     expect(eventTypeToOccasion('Mariage')).toBe('Mariage');
-    expect(eventTypeToOccasion('Naissance')).toBe('Naissance');
   });
 
   it('collapses Autre', () => {

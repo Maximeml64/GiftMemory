@@ -72,8 +72,7 @@ export default function GiftsScreen() {
       result = result.filter(
         (g) =>
           g.name.toLowerCase().includes(q) ||
-          g.giver.toLowerCase().includes(q) ||
-          (g.tags ?? []).some((t) => t.toLowerCase().includes(q))
+          g.giver.toLowerCase().includes(q)
       );
     }
     result.sort((a, b) => {

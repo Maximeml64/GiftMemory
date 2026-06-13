@@ -2,7 +2,7 @@
 
 export type Occasion = 'Anniversaire' | 'Noël' | 'Naissance' | 'Mariage' | 'Autre';
 export type GiftCategory = 'Cadeau' | 'Vin & Spiritueux';
-export type EventType = 'Anniversaire' | 'Mariage' | 'Naissance' | 'Autre';
+export type EventType = 'Anniversaire' | 'Mariage' | 'Autre';
 export type GiftDirection = 'received' | 'given';
 // 'idea' = pas encore offert/reçu (wishlist) ; 'done' = effectif (date réelle).
 export type GiftStatus = 'idea' | 'done';
@@ -12,6 +12,8 @@ export interface Gift {
   imageUri: string | null;
   // Photos supplémentaires (carte, emballage, déballé…). Optionnel.
   additionalPhotos?: string[];
+  // Photo du ticket de caisse (échange / retour / garantie). Optionnel.
+  receiptUri?: string;
   name: string;
   // Personne associée : donneur si direction='received', destinataire si direction='given'
   giver: string;
@@ -29,8 +31,6 @@ export interface Gift {
   date: string;
   // Prix payé (cadeau offert) ou estimé (idée). Optionnel.
   price?: number;
-  // Étiquettes libres (ex. "livre", "expérience", "fait main").
-  tags?: string[];
   // Où acheter / où c'était acheté.
   purchaseLocation?: string;
   // Lien web (boutique, page produit, etc.).
@@ -49,7 +49,17 @@ export interface CalendarEvent {
   type: EventType;
   month: number;
   day: number;
+  // Présent = événement ponctuel à date fixe (ex. mariage, possiblement à
+  // +1 an) ; absent = événement récurrent chaque année (ex. anniversaire).
+  year?: number;
+  // Année de naissance (Anniversaire) pour afficher l'âge. Optionnel.
+  birthYear?: number;
+  // 0 = le jour J, sinon N jours avant.
   reminderDays: number;
+  // Heure du rappel. Optionnels pour rétrocompat : les événements créés avant
+  // cette feature sont traités comme 09:00.
+  reminderHour?: number;
+  reminderMinute?: number;
   giftGiven?: string;
   notes?: string;
   createdAt: string;

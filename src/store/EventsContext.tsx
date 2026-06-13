@@ -7,6 +7,19 @@ import { scheduleEventNotifications, cancelEventNotifications } from '../utils/n
 
 const EVENTS_KEY = '@gift_memory_events';
 
+// Parse the persisted blob defensively: corrupt JSON or a non-array value
+// (e.g. an object written by an older/foreign build) returns [] instead of
+// propagating a value that would crash the first `.map` downstream.
+function parseEvents(raw: string | null): CalendarEvent[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 interface EventsState { events: CalendarEvent[]; loading: boolean; }
 type Action = { type: 'SET_EVENTS'; payload: CalendarEvent[] } | { type: 'SET_LOADING'; payload: boolean };
 
@@ -32,7 +45,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(EVENTS_KEY)
       .then((raw) => {
-        dispatch({ type: 'SET_EVENTS', payload: raw ? JSON.parse(raw) : [] });
+        dispatch({ type: 'SET_EVENTS', payload: parseEvents(raw) });
       })
       .catch(() => {
         dispatch({ type: 'SET_EVENTS', payload: [] });
@@ -46,7 +59,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const saveEvent = useCallback(async (event: CalendarEvent) => {
     const raw = await AsyncStorage.getItem(EVENTS_KEY);
-    const current: CalendarEvent[] = raw ? JSON.parse(raw) : [];
+    const current = parseEvents(raw);
     const index = current.findIndex((e) => e.id === event.id);
     const updated = index >= 0
       ? current.map((e) => (e.id === event.id ? event : e))
@@ -57,7 +70,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const removeEvent = useCallback(async (eventId: string) => {
     const raw = await AsyncStorage.getItem(EVENTS_KEY);
-    const current: CalendarEvent[] = raw ? JSON.parse(raw) : [];
+    const current = parseEvents(raw);
     await persist(current.filter((e) => e.id !== eventId));
     await cancelEventNotifications(eventId);
   }, [persist]);

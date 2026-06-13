@@ -11,11 +11,11 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFF8F0"
+      "backgroundColor": "#FDF9F4"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.maxime.giftmemory",
+      "bundleIdentifier": "com.maximeml.giftmemory",
       "infoPlist": {
         "NSCameraUsageDescription": "Pour prendre une photo du cadeau.",
         "NSPhotoLibraryUsageDescription": "Pour choisir une photo depuis la galerie.",
@@ -28,7 +28,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#E8734A",
+          "color": "#4A1942",
           "sounds": []
         }
       ],

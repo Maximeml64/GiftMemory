@@ -19,7 +19,7 @@ import {
   TrashIcon,
 } from '../components/ui';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../utils/theme';
-import { daysUntilNext, sortEventsByNext } from '../utils/eventUtils';
+import { daysUntilEvent, sortEventsByNext } from '../utils/eventUtils';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -98,7 +98,7 @@ function SwipeableEventRow({ event, onPress, onDelete }: SwipeableEventRowProps)
       >
         <EventCountdownCard
           event={event}
-          daysUntil={daysUntilNext(event.month, event.day)}
+          daysUntil={daysUntilEvent(event)}
           onPress={onPress}
         />
       </Swipeable>
